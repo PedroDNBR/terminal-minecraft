@@ -1,5 +1,6 @@
 #pragma once
-#include "Vector.h"
+#include "../Renderer/Vector.h"
+
 struct Camera
 {
 	Vector3 position = { 0, 0, 0 };

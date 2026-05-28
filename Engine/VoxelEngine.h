@@ -1,7 +1,9 @@
 #pragma once
-#include "Renderer.h"
-#include "Camera.h"
-#include "Vertex.h"
+#include "../Renderer/Vector.h"
+#include "../World/Camera.h"
+#include "../Renderer/Renderer.h"
+#include "../Renderer/Vertex.h"
+#include "../Renderer/Vector.h"
 #include "DirectionsXZ.h"
 
 class VoxelEngine

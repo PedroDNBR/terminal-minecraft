@@ -1,5 +1,6 @@
-#include "Renderer.h"
-#include "VoxelEngine.h"
+#include "Renderer/Renderer.h"
+#include "Engine/VoxelEngine.h"
+#include "World/Camera.h"
 
 int main()
 {

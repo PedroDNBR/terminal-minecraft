@@ -1,5 +1,5 @@
 #include "VoxelEngine.h"
-#include "Quad.h"
+#include "../Renderer/Quad.h"
 
 void VoxelEngine::render(Renderer& renderer, Camera& camera)
 {
