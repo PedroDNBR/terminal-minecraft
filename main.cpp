@@ -1,3 +1,4 @@
+#include <chrono>
 #include "Renderer/Renderer.h"
 #include "Engine/VoxelEngine.h"
 #include "World/Camera.h"
@@ -15,8 +16,17 @@ int main()
 
 	camera.updateCatheti();
 
+	float deltaTime = 0.1f;
+	auto lastTime = std::chrono::high_resolution_clock::now();
+	auto now = std::chrono::high_resolution_clock::now();
+
 	while (true)
 	{
+		auto now = std::chrono::high_resolution_clock::now();
+		deltaTime = std::chrono::duration<float>(now - lastTime).count();
+		lastTime = now;
+		if (deltaTime > 0.1f) deltaTime = 0.1f;
+
 		renderer.hasWindowResized();
 
 		renderer.clear();
