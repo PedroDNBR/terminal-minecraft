@@ -1,30 +1,23 @@
-#include "Renderer.h"
-#include "VoxelEngine.h"
 
+#include <windows.h>
+#include <vector>
 int main()
 {
-	Renderer renderer(80, 50);
-	VoxelEngine voxelEngine;
-	Camera camera;
-
-	camera.pitch = 0;
-
-	camera.fovRadius = camera.fov * 3.14159f / 180.f;
-	camera.focalLen = 1.0f / tanf(camera.fovRadius * .5f);
-
-	camera.updateCatheti();
-
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	SMALL_RECT rect = { 0, 0, 79, 49};
+	SetConsoleWindowInfo(consoleHandle, TRUE, &rect);
+	CONSOLE_SCREEN_BUFFER_INFOEX consoleScreenBufferInfoEx = { sizeof(consoleScreenBufferInfoEx) };
+	GetConsoleScreenBufferInfoEx(consoleHandle, &consoleScreenBufferInfoEx);
+	CONSOLE_SCREEN_BUFFER_INFO consoleScreenBufferInfo = { sizeof(consoleScreenBufferInfo) };
+	GetConsoleScreenBufferInfo (consoleHandle, &consoleScreenBufferInfo);
+	std::vector<CHAR_INFO> buffer(80 * 50);
 	while (true)
 	{
-		renderer.hasWindowResized();
-
-		renderer.clear();
-
-		camera.updateCatheti();
-
-		voxelEngine.render(renderer, camera);
-			
-		renderer.present();
+		for (auto& cell : buffer)
+		{
+			cell.Char.UnicodeChar = L'X';
+			cell.Attributes = 14;
+		}
+		WriteConsoleOutput(consoleHandle, buffer.data(), { 80, 50 }, { 0, 0 }, &rect);
 	}
-	
 }
