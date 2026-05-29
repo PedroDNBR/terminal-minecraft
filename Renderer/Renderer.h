@@ -11,6 +11,7 @@ public:
 	void resizeWindow(int newWidth, int newHeight);
 	void clear();
 	void drawPixel(int x, int y, DWORD color);
+	void drawPixelDepth(int x, int y, DWORD color, float inverseZ);
 	void present();
 
 	int getAspectRatio()  const { return aspectRatio; }
@@ -31,6 +32,7 @@ private:
 
 	std::vector<CHAR_INFO> screenBuffer;
 	std::vector<WORD> colorBuffer;
+	std::vector<float> depthBuffer;
 
 	float aspectRatio;
 };

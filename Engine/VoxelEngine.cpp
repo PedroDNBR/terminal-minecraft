@@ -17,17 +17,17 @@ void VoxelEngine::render(Renderer& renderer, Camera& camera)
 
 	Quad quad[2];
 
-	quad[0].v0 = { -1, -1, 15 };
-	quad[0].v1 = { 1, -1, 15 };
-	quad[0].v2 = { 1, 1, 15 };
-	quad[0].v3 = { -1, 1, 15 };
-	quad[0].normal = { 0, 0, -1 };
-
-	quad[1].v0 = { -1, -1, 10 };
-	quad[1].v1 = { 1, -1, 10 };
-	quad[1].v2 = { 1, 1, 10 };
-	quad[1].v3 = { -1, 1, 10 };
+	quad[1].v0 = { -1, -1, 11 };
+	quad[1].v1 = { 1, -1, 11 };
+	quad[1].v2 = { 1, 1, 11 };
+	quad[1].v3 = { -1, 1, 11 };
 	quad[1].normal = { 0, 0, -1 };
+
+	quad[0].v0 = { -1, -1, 10 };
+	quad[0].v1 = { 1, -1, 10 };
+	quad[0].v2 = { 1, 1, 10 };
+	quad[0].v3 = { -1, 1, 10 };
+	quad[0].normal = { 0, 0, -1 };
 
 	const int width = renderer.getLogicalWidth();
 	const int height = renderer.getLogicalHeight();
@@ -66,7 +66,7 @@ void VoxelEngine::render(Renderer& renderer, Camera& camera)
 			projected[i] = projectViewSpacePoint(clipped[i], camera, renderer.getAspectRatio(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
 
 		for (int i = 0; i < clippedCount; i++)
-			renderer.drawPixel(projected[i].viewPosition.x, projected[i].viewPosition.y, 13 + q);
+			renderer.drawPixelDepth(projected[i].viewPosition.x, projected[i].viewPosition.y, 13 + q, projected[i].inverseZ);
 	}
 
 	

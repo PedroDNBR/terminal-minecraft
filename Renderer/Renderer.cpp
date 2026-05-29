@@ -13,6 +13,7 @@ Renderer::Renderer(int width, int height)
 	rect = {0,0, static_cast<SHORT>(width - 1), static_cast<SHORT>(height - 1)};
 
 	colorBuffer.resize(width * height);
+	depthBuffer.resize(width * height, 0);
 }
 
 void Renderer::drawPixel(int x, int y, DWORD color)
@@ -21,6 +22,19 @@ void Renderer::drawPixel(int x, int y, DWORD color)
 		return;
 
 	colorBuffer[y * logicalWidth + x] = color;
+}
+
+void Renderer::drawPixelDepth(int x, int y, DWORD color, float inverseZ)
+{
+	if (x < 0 || x >= logicalWidth || y < 0 || y >= logicalHeight)
+		return;
+
+	int index = y * logicalWidth + x;
+	if (inverseZ <= depthBuffer[index])
+		return;
+
+	depthBuffer[index] = inverseZ;
+	colorBuffer[index] = color;
 }
 
 void Renderer::getWindowSize(int& width, int& height)
@@ -46,13 +60,15 @@ void Renderer::resizeWindow(int newWidth, int newHeight)
 	rect.Right = static_cast<SHORT>(realWidth - 1);
 	rect.Bottom = static_cast<SHORT>(realHeight - 1);
 
-	colorBuffer.resize(logicalWidth * logicalHeight, 0);
+	colorBuffer.resize(logicalWidth * logicalHeight);
+	depthBuffer.resize(logicalWidth * logicalHeight, 0);
 }
 
 void Renderer::clear()
 {
 	int logicalSize = logicalWidth * logicalHeight;
 	std::fill(colorBuffer.begin(), colorBuffer.end(), 0);
+	std::fill(depthBuffer.begin(), depthBuffer.end(), 0.0f);
 }
 
 bool Renderer::hasWindowResized()
