@@ -22,19 +22,21 @@ void VoxelEngine::render(Renderer& renderer, Camera& camera)
 	quad[1].v2 = { 1, 1, 11 };
 	quad[1].v3 = { -1, 1, 11 };
 	quad[1].normal = { 0, 0, -1 };
+	quad[1].color = 11;
 
 	quad[0].v0 = { -1, -1, 10 };
 	quad[0].v1 = { 1, -1, 10 };
 	quad[0].v2 = { 1, 1, 10 };
 	quad[0].v3 = { -1, 1, 10 };
 	quad[0].normal = { 0, 0, -1 };
+	quad[0].color = 4;
 
 	const int width = renderer.getLogicalWidth();
 	const int height = renderer.getLogicalHeight();
 
 	for (int q = 0; q < 2; q++)
 	{
-		// verifica se o quad está virado para a camera
+		// verifica se o quad estï¿½ virado para a camera
 		Vector3 center = (quad[q].v0 + quad[q].v1 + quad[q].v2 + quad[q].v3) * .25f;
 		Vector3 toCameraView = camera.position - center;
 		float dot = quad[q].normal.x * toCameraView.x +
@@ -65,14 +67,11 @@ void VoxelEngine::render(Renderer& renderer, Camera& camera)
 		for (int i = 0; i < clippedCount; i++)
 			projected[i] = projectViewSpacePoint(clipped[i], camera, renderer.getAspectRatio(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
 
-		for (int i = 0; i < clippedCount; i++)
-			renderer.drawPixelDepth(projected[i].viewPosition.x, projected[i].viewPosition.y, 13 + q, projected[i].inverseZ);
+		for (int i = 1; i + 1 < clippedCount; i++)
+			renderer.drawFilledQuad(projected[0], projected[i], projected[i + 1], projected[i + 1], quad[q].color);
 	}
 
-	
-
 	renderer.drawPixel(2, 5, 10);
-
 }
 
 Vector3 VoxelEngine::convertToCameraSpace(Vector3& position, Camera& camera)

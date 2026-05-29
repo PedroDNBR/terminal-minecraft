@@ -24,7 +24,7 @@ void Renderer::drawPixel(int x, int y, DWORD color)
 	colorBuffer[y * logicalWidth + x] = color;
 }
 
-void Renderer::drawPixelDepth(int x, int y, DWORD color, float inverseZ)
+void Renderer::drawPixelDepth(int x, int y, float inverseZ, DWORD color)
 {
 	if (x < 0 || x >= logicalWidth || y < 0 || y >= logicalHeight)
 		return;
@@ -35,6 +35,93 @@ void Renderer::drawPixelDepth(int x, int y, DWORD color, float inverseZ)
 
 	depthBuffer[index] = inverseZ;
 	colorBuffer[index] = color;
+}
+
+void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, DWORD color)
+{
+	const int quadVertexCount = 4;
+	float verticesX[quadVertexCount] = { v0.viewPosition.x, v1.viewPosition.x, v2.viewPosition.x, v3.viewPosition.x };
+	float verticesY[quadVertexCount] = { v0.viewPosition.y, v1.viewPosition.y, v2.viewPosition.y, v3.viewPosition.y };
+	float verticesZ[quadVertexCount] = { v0.inverseZ, v1.inverseZ, v2.inverseZ, v3.inverseZ };
+
+	float minY = verticesY[0];
+	float maxY = verticesY[0];
+
+	for (int i = 0; i < quadVertexCount; i++)
+	{
+		if (verticesY[i] < minY) minY = verticesY[i];
+		if (verticesY[i] > maxY) maxY = verticesY[i];
+	}
+
+	int yStart = static_cast<int>(std::ceil(minY));
+	int yEnd = static_cast<int>(std::ceil(maxY));
+
+	if (yStart < 0)
+		yStart = 0;
+	if (yEnd >= logicalHeight)
+		yEnd = logicalHeight - 1;
+
+	for (int y = yStart; y <= yEnd; y++)
+	{
+		float scanY = (float)y + .5f;
+
+		float xLeft = 1e9f;
+		float xRight = -1e9f;
+
+		float inverseZLeft = 0.0f;
+		float inverseZRight = 0.0f;
+
+		for (int i = 0; i < quadVertexCount; i++)
+		{
+			int j = (i + 1) % quadVertexCount;
+			float startLineX = verticesX[i];
+			float startLineY = verticesY[i];
+			float startLineZ = verticesZ[i];
+
+			float endLineX = verticesX[j];
+			float endLineY = verticesY[j];
+			float endLineZ = verticesZ[j];
+
+			if (
+				(startLineY <= scanY && endLineY > scanY) ||
+				(endLineY <= scanY && startLineY > scanY)
+				)
+			{
+				float t = (scanY - startLineY) / (endLineY - startLineY);
+				float interpolationX = startLineX + t * (endLineX - startLineX);
+				float interpolationZ = startLineZ + t * (endLineZ - startLineZ);
+
+				if (interpolationX < xLeft)
+				{
+					xLeft = interpolationX;
+					inverseZLeft = interpolationZ;
+				}
+				if (interpolationX > xRight)
+				{
+					xRight = interpolationX;
+					inverseZRight = interpolationZ;
+				}
+				if (xLeft > xRight) continue;
+
+				int startX = (int)xLeft;
+				int endX = (int)xRight;
+
+				if (startX < 0)
+					startX = 0;
+				if (endX >= logicalWidth)
+					endX = logicalWidth - 1;
+
+				float lineLenght = xRight - xLeft;
+
+				for (int x = startX; x < endX; x++)
+				{
+					float t = (lineLenght < 1e-6f) ? 0.0f : ((x + 0.5f) - xLeft) / lineLenght;
+					float invZ = inverseZLeft + t * (inverseZRight - inverseZLeft);
+					drawPixelDepth(x, y, invZ, color);
+				}
+			}
+		}
+	}
 }
 
 void Renderer::getWindowSize(int& width, int& height)

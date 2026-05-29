@@ -1,6 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <vector>
+#include "Vertex.h"
 
 class Renderer
 {
@@ -11,7 +12,8 @@ public:
 	void resizeWindow(int newWidth, int newHeight);
 	void clear();
 	void drawPixel(int x, int y, DWORD color);
-	void drawPixelDepth(int x, int y, DWORD color, float inverseZ);
+	void drawPixelDepth(int x, int y, float inverseZ, DWORD color);
+	void drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, DWORD color);
 	void present();
 
 	int getAspectRatio()  const { return aspectRatio; }
