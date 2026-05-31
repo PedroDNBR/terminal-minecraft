@@ -22,7 +22,11 @@ int main()
 	auto lastTime = std::chrono::high_resolution_clock::now();
 	auto now = std::chrono::high_resolution_clock::now();
 
-	float testingMovementSpeed = 5.f;
+	float testingMovementSpeed = 2.f;
+
+	Vector3 startingPlayerPosition = { 0,0,-2 };
+
+	player.setPosition(startingPlayerPosition);
 
 	while (true)
 	{
@@ -31,10 +35,21 @@ int main()
 		lastTime = now;
 		if (deltaTime > 0.1f) deltaTime = 0.1f;
 
-		if (GetKeyState('W') & 0x8000) player.setPosition(player.getPosition() + Vector3{ 0, 0, testingMovementSpeed } *deltaTime);
-		if (GetKeyState('S') & 0x8000) player.setPosition(player.getPosition() + Vector3{ 0, 0, -testingMovementSpeed } *deltaTime);
-		if (GetKeyState('D') & 0x8000) player.setPosition(player.getPosition() + Vector3{ testingMovementSpeed, 0, 0 } *deltaTime);
-		if (GetKeyState('A') & 0x8000) player.setPosition(player.getPosition() + Vector3{ -testingMovementSpeed, 0, 0 } *deltaTime);
+		//if (GetKeyState('W') & 0x8000) player.setPosition(player.getPosition() + Vector3{ 0, 0, testingMovementSpeed } *deltaTime);
+		if (GetKeyState('W') & 0x8000) player.setPosition(player.getPosition() + player.getCamera().getForward() * testingMovementSpeed * deltaTime);
+		//if (GetKeyState('S') & 0x8000) player.setPosition(player.getPosition() + Vector3{ 0, 0, -testingMovementSpeed } *deltaTime);
+		if (GetKeyState('S') & 0x8000) player.setPosition(player.getPosition() + player.getCamera().getForward() * -testingMovementSpeed * deltaTime);
+		//if (GetKeyState('D') & 0x8000) player.setPosition(player.getPosition() + Vector3{ testingMovementSpeed, 0, 0 } *deltaTime);
+		if (GetKeyState('D') & 0x8000) player.setPosition(player.getPosition() + player.getCamera().getRight() * testingMovementSpeed * deltaTime);
+		//if (GetKeyState('A') & 0x8000) player.setPosition(player.getPosition() + Vector3{ -testingMovementSpeed, 0, 0 } *deltaTime);
+		if (GetKeyState('A') & 0x8000) player.setPosition(player.getPosition() + player.getCamera().getRight() * -testingMovementSpeed * deltaTime);
+
+		if (GetKeyState('J') & 0x8000) player.setRotation(player.getRotation() + Vector3{ 0, testingMovementSpeed, 0 } *20*deltaTime);
+		if (GetKeyState('L') & 0x8000) player.setRotation(player.getRotation() + Vector3{ 0, -testingMovementSpeed, 0 } *20 *deltaTime);
+		if (GetKeyState('I') & 0x8000) player.setRotation(player.getRotation() + Vector3{ testingMovementSpeed, 0, 0 } *20 *deltaTime);
+		if (GetKeyState('K') & 0x8000) player.setRotation(player.getRotation() + Vector3{ -testingMovementSpeed, 0, 0 } *20 *deltaTime);
+
+
 		if (GetKeyState(VK_SPACE) & 0x8000) player.setPosition(player.getPosition() + Vector3{ 0, testingMovementSpeed, 0 } *deltaTime);
 		if (GetKeyState(VK_LCONTROL) & 0x8000) player.setPosition(player.getPosition() + Vector3{ 0, -testingMovementSpeed, 0 } *deltaTime);
 

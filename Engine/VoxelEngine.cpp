@@ -5,61 +5,43 @@ void VoxelEngine::render(Renderer& renderer, Camera& camera)
 {
 	renderer.drawPixel(2, 2, 15);
 
-	/*for (int i = 0; i < 4; i++)
+	Quad cubeFaces[6];
+
+	for (int f = 0; f < 6; f++)
 	{
-		Quad cubeFaces[6];
+		cubeFaces[f].v0 = cubeVerticesPositions[faceIndices[f][0]];
+		cubeFaces[f].v1 = cubeVerticesPositions[faceIndices[f][1]];
+		cubeFaces[f].v2 = cubeVerticesPositions[faceIndices[f][2]];
+		cubeFaces[f].v3 = cubeVerticesPositions[faceIndices[f][3]];
+		cubeFaces[f].normal = cubeFacesDirections[f];
+		cubeFaces[f].color = 3;
+	}
 
-		for (int i = 0; i < 6; i++)
-		{
-
-		}
-	}*/
-
-	Quad quad[2];
-
-	quad[1].v0 = { -1, -1, 11 };
-	quad[1].v1 = { 1, -1, 11 };
-	quad[1].v2 = { 1, 1, 11 };
-	quad[1].v3 = { -1, 1, 11 };
-	quad[1].normal = { 0, 0, -1 };
-	quad[1].color = 11;
-
-	quad[0].v0 = { -1, -1, 10 };
-	quad[0].v1 = { 1, -1, 10 };
-	quad[0].v2 = { 1, 1, 10 };
-	quad[0].v3 = { -1, 1, 10 };
-	quad[0].normal = { 0, 0, -1 };
-	quad[0].color = 4;
-
-	const int width = renderer.getLogicalWidth();
-	const int height = renderer.getLogicalHeight();
-
-	for (int q = 0; q < 2; q++)
+	for (int q = 0; q < 6; q++)
 	{
-		// verifica se o quad est� virado para a camera
-		Vector3 center = (quad[q].v0 + quad[q].v1 + quad[q].v2 + quad[q].v3) * .25f;
+		renderer.drawPixel(2, 3, 4);
+		Vector3 center = (cubeFaces[q].v0 + cubeFaces[q].v1 + cubeFaces[q].v2 + cubeFaces[q].v3) * .25f;
 		Vector3 toCameraView = camera.position - center;
-		float dot = quad[q].normal.x * toCameraView.x +
-			quad[q].normal.y * toCameraView.y +
-			quad[q].normal.z * toCameraView.z;
+		float dot = cubeFaces[q].normal.x * toCameraView.x +
+			cubeFaces[q].normal.y * toCameraView.y +
+			cubeFaces[q].normal.z * toCameraView.z;
 
 		if (dot <= 0.0f)
-			return;
+			continue;
 
-		renderer.drawPixel(2, 3, 4);
 
 		Vector3 pointsRelativePositions[4] = {
-			convertToCameraSpace(quad[q].v0, camera),
-			convertToCameraSpace(quad[q].v1, camera),
-			convertToCameraSpace(quad[q].v2, camera),
-			convertToCameraSpace(quad[q].v3, camera)
+			convertToCameraSpace(cubeFaces[q].v0, camera),
+			convertToCameraSpace(cubeFaces[q].v1, camera),
+			convertToCameraSpace(cubeFaces[q].v2, camera),
+			convertToCameraSpace(cubeFaces[q].v3, camera)
 		};
 
 		Vector3 clipped[6];
 		int clippedCount = clipNearPlane(pointsRelativePositions, 4, clipped, camera);
 
 		if (clippedCount < 3)
-			return;
+			continue;
 
 		renderer.drawPixel(2, 4, 14);
 
@@ -68,7 +50,7 @@ void VoxelEngine::render(Renderer& renderer, Camera& camera)
 			projected[i] = projectViewSpacePoint(clipped[i], camera, renderer.getAspectRatio(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
 
 		for (int i = 1; i + 1 < clippedCount; i++)
-			renderer.drawFilledQuad(projected[0], projected[i], projected[i + 1], projected[i + 1], quad[q].color);
+			renderer.drawFilledQuad(projected[0], projected[i], projected[i + 1], projected[i + 1], cubeFaces[q].color + q);
 	}
 
 	renderer.drawPixel(2, 5, 10);
@@ -77,12 +59,14 @@ void VoxelEngine::render(Renderer& renderer, Camera& camera)
 Vector3 VoxelEngine::convertToCameraSpace(Vector3& position, Camera& camera)
 {
 	Vector3 relativePosition = position - camera.position;
-	float relativeX = camera.cosYaw * relativePosition.x - camera.sinYaw * relativePosition.z;
+	float relativeX = camera.cosYaw * relativePosition.x + camera.sinYaw * relativePosition.z;
 	float relativeZ = -camera.sinYaw * relativePosition.x + camera.cosYaw * relativePosition.z;
+	float relativeY = camera.cosPitch * relativePosition.y - camera.sinPitch * relativeZ;
+	relativeZ = camera.sinPitch * relativePosition.y + camera.cosPitch * relativeZ;
+	
 	relativePosition.x = relativeX;
-	relativePosition.z = relativeZ;
-	float relativeY = camera.cosPitch * relativePosition.y - camera.sinPitch * relativePosition.z;
 	relativePosition.y = relativeY;
+	relativePosition.z = relativeZ;
 
 	return relativePosition;
 }

@@ -8,6 +8,7 @@ public:
 
 	Vector3 getPosition() const { return position; }
 	Vector3 getRotation() const { return rotation; }
+	Camera& getCamera() const { return camera; }
 
 	void setPosition(const Vector3& newPosition);
 	void setRotation(const Vector3& newRotation);

@@ -53,8 +53,8 @@ void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, DWORD 
 		if (verticesY[i] > maxY) maxY = verticesY[i];
 	}
 
-	int yStart = static_cast<int>(std::ceil(minY));
-	int yEnd = static_cast<int>(std::ceil(maxY));
+	int yStart = (int)minY;
+	int yEnd = (int)maxY;
 
 	if (yStart < 0)
 		yStart = 0;
@@ -101,24 +101,24 @@ void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, DWORD 
 					xRight = interpolationX;
 					inverseZRight = interpolationZ;
 				}
-				if (xLeft > xRight) continue;
+			}
+			if (xLeft > xRight) continue;
 
-				int startX = (int)xLeft;
-				int endX = (int)xRight;
+			int startX = (int)xLeft;
+			int endX = (int)xRight;
 
-				if (startX < 0)
-					startX = 0;
-				if (endX >= logicalWidth)
-					endX = logicalWidth - 1;
+			if (startX < 0)
+				startX = 0;
+			if (endX >= logicalWidth)
+				endX = logicalWidth - 1;
 
-				float lineLenght = xRight - xLeft;
+			float lineLenght = xRight - xLeft;
 
-				for (int x = startX; x < endX; x++)
-				{
-					float t = (lineLenght < 1e-6f) ? 0.0f : ((x + 0.5f) - xLeft) / lineLenght;
-					float invZ = inverseZLeft + t * (inverseZRight - inverseZLeft);
-					drawPixelDepth(x, y, invZ, color);
-				}
+			for (int x = startX; x < endX; x++)
+			{
+				float t = (lineLenght < 1e-6f) ? 0.0f : ((x + 0.5f) - xLeft) / lineLenght;
+				float invZ = inverseZLeft + t * (inverseZRight - inverseZLeft);
+				drawPixelDepth(x, y, invZ, color);
 			}
 		}
 	}

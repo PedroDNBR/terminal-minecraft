@@ -17,6 +17,25 @@ struct Camera
 
 	const float nearPlane = .1f;
 
+	Vector3 getForward() const
+	{
+		return {
+			-sin(yaw), 
+			0, 
+			cos(yaw)
+		};
+	}
+	
+	Vector3 getRight() const
+	{
+		Vector3 forward = getForward();
+		return {
+			forward.z,
+			0,
+			-forward.x
+		};
+	}
+
 	void updateCatheti()
 	{
 		cosYaw = cosf(yaw);
