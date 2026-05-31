@@ -3,7 +3,6 @@
 #include "../World/Camera.h"
 #include "../Renderer/Renderer.h"
 #include "../Renderer/Vertex.h"
-#include "../Renderer/Vector.h"
 #include "DirectionsXZ.h"
 
 class VoxelEngine

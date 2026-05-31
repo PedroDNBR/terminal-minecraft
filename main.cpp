@@ -6,7 +6,7 @@
 
 int main()
 {
-	Renderer renderer(80, 50);
+	Renderer renderer(80, 50, true);
 	VoxelEngine voxelEngine;
 	Camera camera;
 	camera.pitch = 0;

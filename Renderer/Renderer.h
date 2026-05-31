@@ -6,7 +6,7 @@
 class Renderer
 {
 public:
-	Renderer(int width, int height);
+	Renderer(int width, int height, bool startFullscreen = false);
 	bool hasWindowResized();
 	void getWindowSize(int& width, int& height);
 	void resizeWindow(int newWidth, int newHeight);

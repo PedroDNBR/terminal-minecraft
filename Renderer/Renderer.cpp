@@ -1,7 +1,8 @@
 #include "Renderer.h"
 
-Renderer::Renderer(int width, int height)
+Renderer::Renderer(int width, int height, bool startFullscreen)
 {
+
 	realWidth = width;
 	realHeight = height / 2;
 	logicalWidth = width;
@@ -14,6 +15,12 @@ Renderer::Renderer(int width, int height)
 
 	colorBuffer.resize(width * height);
 	depthBuffer.resize(width * height, 0);
+
+	if (startFullscreen)
+	{
+		ShowWindow(GetConsoleWindow(), SW_MAXIMIZE);
+		hasWindowResized();
+	}
 }
 
 void Renderer::drawPixel(int x, int y, DWORD color)
