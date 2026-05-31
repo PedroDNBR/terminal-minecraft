@@ -1,13 +1,13 @@
 #include <chrono>
 #include "Renderer/Renderer.h"
-#include "Engine/VoxelEngine.h"
+#include "Engine/VoxelRenderer.h"
 #include "World/Camera.h"
 #include "Game/Entities/Player.h"
 
 int main()
 {
 	Renderer renderer(80, 50, true);
-	VoxelEngine voxelEngine;
+	VoxelRenderer voxelEngine;
 	Camera camera;
 	camera.pitch = 0;
 

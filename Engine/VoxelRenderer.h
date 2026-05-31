@@ -5,7 +5,7 @@
 #include "../Renderer/Vertex.h"
 #include "DirectionsXZ.h"
 
-class VoxelEngine
+class VoxelRenderer
 {
 public:
 	void render(Renderer& renderer, Camera& camera);

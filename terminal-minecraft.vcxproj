@@ -123,14 +123,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Engine\VoxelEngine.cpp" />
+    <ClCompile Include="Engine\VoxelRenderer.cpp" />
     <ClCompile Include="Game\Entities\Player.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\DirectionsXZ.h" />
-    <ClInclude Include="Engine\VoxelEngine.h" />
+    <ClInclude Include="Engine\VoxelRenderer.h" />
     <ClInclude Include="Game\Entities\Player.h" />
     <ClInclude Include="Renderer\Quad.h" />
     <ClInclude Include="Renderer\Renderer.h" />
