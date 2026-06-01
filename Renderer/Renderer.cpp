@@ -1,29 +1,45 @@
 #include "Renderer.h"
 
-Renderer::Renderer(int width, int height, bool startFullscreen)
+Renderer::Renderer(bool startFullscreen)
 {
-
-	realWidth = width;
-	realHeight = height / 2;
-	logicalWidth = width;
-	logicalHeight = height;
-
-	aspectRatio = (float)logicalWidth / logicalHeight * 0.55f;
-
 	handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	rect = {0,0, static_cast<SHORT>(width - 1), static_cast<SHORT>(height - 1)};
-
-	colorBuffer.resize(width * height);
-	depthBuffer.resize(width * height, 0);
 
 	if (startFullscreen)
 	{
 		ShowWindow(GetConsoleWindow(), SW_MAXIMIZE);
-		hasWindowResized();
 	}
+
+	setupTerminalWindow();
 }
 
-void Renderer::drawPixel(int x, int y, DWORD color)
+void Renderer::setupTerminalWindow()
+{
+	int width = 0;
+	int height = 0;
+
+	getWindowSize(width, height);
+
+	realWidth = width;
+	realHeight = height;
+	logicalWidth = width;
+	logicalHeight = height * 2;
+
+	aspectRatio = (float)logicalWidth / logicalHeight * 0.55f;
+
+	rect = { 0,0, (SHORT)(realWidth - 1), (SHORT)(realHeight - 1) };
+
+	resizeBuffers();
+}
+
+void Renderer::resizeBuffers()
+{
+	int logicalSize = logicalWidth * logicalHeight;
+	colorBuffer.resize(logicalSize);
+	depthBuffer.resize(logicalSize, 0);
+	screenBuffer.resize(realWidth * realHeight);
+}
+
+void Renderer::drawPixel(int x, int y, WORD color)
 {
 	if (x < 0 || x >= logicalWidth || y < 0 || y >= logicalHeight)
 		return;
@@ -31,7 +47,7 @@ void Renderer::drawPixel(int x, int y, DWORD color)
 	colorBuffer[y * logicalWidth + x] = color;
 }
 
-void Renderer::drawPixelDepth(int x, int y, float inverseZ, DWORD color)
+void Renderer::drawPixelDepth(int x, int y, float inverseZ, WORD color)
 {
 	if (x < 0 || x >= logicalWidth || y < 0 || y >= logicalHeight)
 		return;
@@ -44,7 +60,7 @@ void Renderer::drawPixelDepth(int x, int y, float inverseZ, DWORD color)
 	colorBuffer[index] = color;
 }
 
-void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, DWORD color)
+void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD color)
 {
 	const int quadVertexCount = 4;
 	float verticesX[quadVertexCount] = { v0.viewPosition.x, v1.viewPosition.x, v2.viewPosition.x, v3.viewPosition.x };
@@ -54,7 +70,7 @@ void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, DWORD 
 	float minY = verticesY[0];
 	float maxY = verticesY[0];
 
-	for (int i = 0; i < quadVertexCount; i++)
+	for (int i = 1; i < quadVertexCount; i++)
 	{
 		if (verticesY[i] < minY) minY = verticesY[i];
 		if (verticesY[i] > maxY) maxY = verticesY[i];
@@ -109,24 +125,24 @@ void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, DWORD 
 					inverseZRight = interpolationZ;
 				}
 			}
-			if (xLeft > xRight) continue;
+		}
+		if (xLeft > xRight) continue;
 
-			int startX = (int)xLeft;
-			int endX = (int)xRight;
+		int startX = (int)xLeft;
+		int endX = (int)xRight;
 
-			if (startX < 0)
-				startX = 0;
-			if (endX >= logicalWidth)
-				endX = logicalWidth - 1;
+		if (startX < 0)
+			startX = 0;
+		if (endX >= logicalWidth)
+			endX = logicalWidth - 1;
 
-			float lineLenght = xRight - xLeft;
+		float lineLenght = xRight - xLeft;
 
-			for (int x = startX; x < endX; x++)
-			{
-				float t = (lineLenght < 1e-6f) ? 0.0f : ((x + 0.5f) - xLeft) / lineLenght;
-				float invZ = inverseZLeft + t * (inverseZRight - inverseZLeft);
-				drawPixelDepth(x, y, invZ, color);
-			}
+		for (int x = startX; x <= endX; x++)
+		{
+			float t = (lineLenght < 1e-6f) ? 0.0f : ((x + 0.5f) - xLeft) / lineLenght;
+			float invZ = inverseZLeft + t * (inverseZRight - inverseZLeft);
+			drawPixelDepth(x, y, invZ, color);
 		}
 	}
 }
@@ -138,24 +154,6 @@ void Renderer::getWindowSize(int& width, int& height)
 
 	width = consoleScreenBufferInfo.srWindow.Right - consoleScreenBufferInfo.srWindow.Left + 1;
 	height = consoleScreenBufferInfo.srWindow.Bottom - consoleScreenBufferInfo.srWindow.Top + 1;
-}
-
-void Renderer::resizeWindow(int newWidth, int newHeight)
-{
-	realWidth = newWidth;
-	realHeight = newHeight;
-
-	logicalWidth = newWidth;
-	logicalHeight = newHeight * 2;
-
-	aspectRatio = (float)logicalWidth / logicalHeight * 0.55f;
-
-	screenBuffer.resize(realWidth * realHeight);
-	rect.Right = static_cast<SHORT>(realWidth - 1);
-	rect.Bottom = static_cast<SHORT>(realHeight - 1);
-
-	colorBuffer.resize(logicalWidth * logicalHeight);
-	depthBuffer.resize(logicalWidth * logicalHeight, 0);
 }
 
 void Renderer::clear()
@@ -170,9 +168,9 @@ bool Renderer::hasWindowResized()
 	int newWidth, newHeight;
 	getWindowSize(newWidth, newHeight);
 
-	if (newWidth != realWidth || newHeight != realHeight)
+	if (newWidth != logicalWidth || newHeight != logicalHeight)
 	{
-		resizeWindow(newWidth, newHeight);
+		setupTerminalWindow();
 		return true;
 	}
 
@@ -198,7 +196,7 @@ void Renderer::present()
 	WriteConsoleOutput(
 		handle, 
 		screenBuffer.data(), 
-		{ static_cast<SHORT>(realWidth), static_cast<SHORT>(realHeight) },
+		{ (SHORT)realWidth, (SHORT)realHeight },
 		{0, 0},
 		&rect
 	);

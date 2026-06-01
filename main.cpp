@@ -7,7 +7,7 @@
 
 int main()
 {
-	Renderer renderer(80, 50, true);
+	Renderer renderer(true);
 	renderer.backgroundColor = 11;
 	TerrainGenerator terrainGenerator;
 	terrainGenerator.setBlockProperties();

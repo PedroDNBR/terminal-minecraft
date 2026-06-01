@@ -58,7 +58,7 @@ void VoxelRenderer::generateChunkMesh(Chunk* chunk, BlockProperties* blockProper
 		for (int f = 0; f < 6; f++)
 		{
 			BlockType blockType = chunk->blocks[x][y][z];
-			if (blockType == AIR)
+			if (blockType == AIR || blockType == WATER)
 				continue;
 
 			if (!terrainGenerator->isTransparent(chunk, blockPosition + cubeFacesDirections[f]))

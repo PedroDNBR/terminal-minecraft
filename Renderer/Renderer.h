@@ -6,17 +6,18 @@
 class Renderer
 {
 public:
-	Renderer(int width, int height, bool startFullscreen = false);
+	Renderer(bool startFullscreen = false);
+	void setupTerminalWindow();
+	void resizeBuffers();
 	bool hasWindowResized();
 	void getWindowSize(int& width, int& height);
-	void resizeWindow(int newWidth, int newHeight);
 	void clear();
-	void drawPixel(int x, int y, DWORD color);
-	void drawPixelDepth(int x, int y, float inverseZ, DWORD color);
-	void drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, DWORD color);
+	void drawPixel(int x, int y, WORD color);
+	void drawPixelDepth(int x, int y, float inverseZ, WORD color);
+	void drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD color);
 	void present();
 
-	DWORD backgroundColor = 0;
+	WORD backgroundColor = 0;
 
 	int getAspectRatio()  const { return aspectRatio; }
 	int getLogicalWidth()  const { return logicalWidth; }
