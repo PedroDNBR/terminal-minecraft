@@ -1,6 +1,6 @@
 #pragma once
 #include "Block.h"
-#include "../../Renderer/Vector.h"
+#include "ChunkCoord.h"
 
 struct Chunk
 {
@@ -10,5 +10,5 @@ struct Chunk
 
 	BlockType blocks[SIZE_X][SIZE_Y][SIZE_Z];
 
-	Vector2Int position;
+	ChunkCoord position;
 };

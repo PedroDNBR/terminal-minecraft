@@ -12,7 +12,7 @@ void TerrainGenerator::setBlockProperties()
 	blockProperties[SAND] = { 14, 14, 6, 6, 14, 6 };
 }
 
-void TerrainGenerator::generateChunk(Vector2Int chunkPosition)
+void TerrainGenerator::generateChunk(ChunkCoord chunkPosition)
 {
 	chunks.push_back(generateChunkData(chunkPosition));
 	chunksByPosition[chunkPosition] = chunks.back().get();
@@ -25,10 +25,37 @@ bool TerrainGenerator::isTransparent(Chunk* chunk, Vector3Int position)
 	if (position.x >= 0 && position.x < Chunk::SIZE_X && position.z >= 0 && position.z < Chunk::SIZE_Z)
 		return chunk->blocks[position.x][position.y][position.z] == AIR || chunk->blocks[position.x][position.y][position.z] == WATER;
 
+	Chunk* neighborChunk = nullptr;
+
+	if (position.x < 0)
+	{
+		neighborChunk = chunksByPosition[{ chunk->position.x - 1, chunk->position.z }];
+		if (neighborChunk != nullptr)
+			return neighborChunk->blocks[position.x + Chunk::SIZE_X][position.y][position.z] == AIR || neighborChunk->blocks[position.x + Chunk::SIZE_X][position.y][position.z] == WATER;
+	}
+	if (position.x >= Chunk::SIZE_X)
+	{
+		neighborChunk = chunksByPosition[{ chunk->position.x + 1, chunk->position.z }];
+		if (neighborChunk != nullptr)
+			return neighborChunk->blocks[position.x - Chunk::SIZE_X][position.y][position.z] == AIR || neighborChunk->blocks[position.x - Chunk::SIZE_X][position.y][position.z] == WATER;
+	}
+	if (position.z < 0)
+	{
+		neighborChunk = chunksByPosition[{ chunk->position.x, chunk->position.z - 1 }];
+		if (neighborChunk != nullptr)
+			return neighborChunk->blocks[position.x][position.y][position.z + Chunk::SIZE_Z] == AIR || neighborChunk->blocks[position.x][position.y][position.z + Chunk::SIZE_Z] == WATER;
+	}
+	if (position.z >= Chunk::SIZE_Z)
+	{
+		neighborChunk = chunksByPosition[{ chunk->position.x, chunk->position.z + 1 }];
+		if (neighborChunk != nullptr)
+			return neighborChunk->blocks[position.x][position.y][position.z - Chunk::SIZE_Z] == AIR || neighborChunk->blocks[position.x][position.y][position.z - Chunk::SIZE_Z] == WATER;
+	}
+
 	return true;
 }
 
-std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(Vector2Int chunkPosition)
+std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosition)
 {
 	std::unique_ptr<Chunk> chunk = std::make_unique<Chunk>();
 	chunk->position = chunkPosition;

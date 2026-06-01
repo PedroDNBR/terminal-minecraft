@@ -14,7 +14,7 @@ class VoxelRenderer
 public:
 	void render(Renderer& renderer, Camera& camera);
 	void generateChunkMesh(Chunk* chunk, BlockProperties* blockProperties, TerrainGenerator* terrainGenerator);
-	std::unordered_map<Vector2Int, std::vector<Quad>, Vector2IntHash> chunksMeshesByPosition;
+	std::unordered_map<ChunkCoord, std::vector<Quad>, ChunkCoordHash> chunksMeshesByPosition;
 
 private:
 	Vector3 convertToCameraSpace(Vector3& position, Camera& camera);

@@ -140,6 +140,7 @@
     <ClInclude Include="World\Camera.h" />
     <ClInclude Include="World\Chunk\Block.h" />
     <ClInclude Include="World\Chunk\Chunk.h" />
+    <ClInclude Include="World\Chunk\ChunkCoord.h" />
     <ClInclude Include="World\Noise.h" />
     <ClInclude Include="World\TerrainGenerator.h" />
   </ItemGroup>

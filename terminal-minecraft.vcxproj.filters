@@ -78,5 +78,8 @@
     <ClInclude Include="World\TerrainGenerator.h">
       <Filter>World</Filter>
     </ClInclude>
+    <ClInclude Include="World\Chunk\ChunkCoord.h">
+      <Filter>World\Chunk</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

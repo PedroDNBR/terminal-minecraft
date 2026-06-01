@@ -68,7 +68,7 @@ void VoxelRenderer::generateChunkMesh(Chunk* chunk, BlockProperties* blockProper
 			Vector3 positionOffset = {
 				(float)x + (float)chunk->position.x * Chunk::SIZE_X,
 				(float)y,
-				(float)z + (float)chunk->position.y * Chunk::SIZE_Z };
+				(float)z + (float)chunk->position.z * Chunk::SIZE_Z };
 
 			quad.v0 = cubeVerticesPositions[faceIndices[f][0]] + positionOffset;
 			quad.v1 = cubeVerticesPositions[faceIndices[f][1]] + positionOffset;
