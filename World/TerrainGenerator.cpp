@@ -12,16 +12,16 @@ void TerrainGenerator::setBlockProperties()
 	blockProperties[SAND] = { 14, 14, 6, 6, 14, 6 };
 }
 
-void TerrainGenerator::generateChunk(int chunkX, int chunkY)
+void TerrainGenerator::generateChunk(Vector2Int chunkPosition)
 {
-	chunks.push_back(generateChunkData(chunkX, chunkY));
-	chunksByPosition[{chunkX, chunkY}] = chunks.back().get();
+	chunks.push_back(generateChunkData(chunkPosition));
+	chunksByPosition[chunkPosition] = chunks.back().get();
 }
 
-std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(int chunkX, int chunkY)
+std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(Vector2Int chunkPosition)
 {
 	std::unique_ptr<Chunk> chunk = std::make_unique<Chunk>();
-	chunk->position = Vector2Int{ chunkX, chunkY };
+	chunk->position = chunkPosition;
 	std::memset(chunk->blocks, AIR, sizeof(chunk->blocks));
 
 	for (int x = 0; x < Chunk::SIZE_X; x++)

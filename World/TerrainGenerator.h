@@ -11,10 +11,12 @@ public:
 	BlockProperties blockProperties[BlockType::MAX] = {};
 
 	void setBlockProperties();
-	void generateChunk(int chunkX, int chunkY);
+	void generateChunk(Vector2Int chunkPosition);
+
+	bool isTransparent(Chunk* chunk, Vector3Int position);
 
 private:
 	std::vector<std::unique_ptr<Chunk>> chunks;
-	std::unique_ptr<Chunk> generateChunkData(int chunkX, int chunkY);
+	std::unique_ptr<Chunk> generateChunkData(Vector2Int chunkPosition);
 };
 

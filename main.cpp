@@ -11,9 +11,9 @@ int main()
 	renderer.backgroundColor = 11;
 	TerrainGenerator terrainGenerator;
 	terrainGenerator.setBlockProperties();
-	terrainGenerator.generateChunk(0, 0);
-	terrainGenerator.generateChunk(1, 0);
-	terrainGenerator.generateChunk(0, 1);
+	terrainGenerator.generateChunk({ 0, 0 });
+	terrainGenerator.generateChunk({ 1, 0 });
+	terrainGenerator.generateChunk({ 0, 1 });
 	VoxelRenderer voxelRenderer;
 	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{0, 0}], terrainGenerator.blockProperties);
 	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{1, 0}], terrainGenerator.blockProperties);
