@@ -21,7 +21,7 @@ Expanding the concept of the [2D Console Graphics Engine](https://github.com/Ped
   </tr>
   <tr>
     <td align="center">
-      <strong>Face projection</strong><br>
+      <strong>Face projection and scan line</strong><br>
       <img width="100%" src="https://i.imgur.com/cmHNZ2z.png" />
     </td>
     <td align="center">
