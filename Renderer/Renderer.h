@@ -16,6 +16,8 @@ public:
 	void drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, DWORD color);
 	void present();
 
+	DWORD backgroundColor = 0;
+
 	int getAspectRatio()  const { return aspectRatio; }
 	int getLogicalWidth()  const { return logicalWidth; }
 	int getLogicalHeight() const { return logicalHeight; }

@@ -20,6 +20,9 @@
     <Filter Include="Game\Entities">
       <UniqueIdentifier>{ef4296e1-f361-43ec-9590-87e3433a9b89}</UniqueIdentifier>
     </Filter>
+    <Filter Include="World\Chunk">
+      <UniqueIdentifier>{4f34b14e-577b-4541-8783-4bb7b1173881}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -33,6 +36,9 @@
     </ClCompile>
     <ClCompile Include="Game\Entities\Player.cpp">
       <Filter>Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="World\TerrainGenerator.cpp">
+      <Filter>World</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -59,6 +65,18 @@
     </ClInclude>
     <ClInclude Include="Game\Entities\Player.h">
       <Filter>Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Noise.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Chunk\Chunk.h">
+      <Filter>World\Chunk</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Chunk\Block.h">
+      <Filter>World\Chunk</Filter>
+    </ClInclude>
+    <ClInclude Include="World\TerrainGenerator.h">
+      <Filter>World</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

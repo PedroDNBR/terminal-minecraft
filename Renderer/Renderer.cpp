@@ -161,7 +161,7 @@ void Renderer::resizeWindow(int newWidth, int newHeight)
 void Renderer::clear()
 {
 	int logicalSize = logicalWidth * logicalHeight;
-	std::fill(colorBuffer.begin(), colorBuffer.end(), 0);
+	std::fill(colorBuffer.begin(), colorBuffer.end(), backgroundColor);
 	std::fill(depthBuffer.begin(), depthBuffer.end(), 0.0f);
 }
 

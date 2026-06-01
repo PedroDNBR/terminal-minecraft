@@ -5,36 +5,25 @@ void VoxelRenderer::render(Renderer& renderer, Camera& camera)
 {
 	renderer.drawPixel(2, 2, 15);
 
-	Quad cubeFaces[6];
-
-	for (int f = 0; f < 6; f++)
-	{
-		cubeFaces[f].v0 = cubeVerticesPositions[faceIndices[f][0]];
-		cubeFaces[f].v1 = cubeVerticesPositions[faceIndices[f][1]];
-		cubeFaces[f].v2 = cubeVerticesPositions[faceIndices[f][2]];
-		cubeFaces[f].v3 = cubeVerticesPositions[faceIndices[f][3]];
-		cubeFaces[f].normal = cubeFacesDirections[f];
-		cubeFaces[f].color = 3;
-	}
-
-	for (int q = 0; q < 6; q++)
+	for (auto chunk : chunksMeshesByPosition)
+	for (auto quad : chunk.second)
 	{
 		renderer.drawPixel(2, 3, 4);
-		Vector3 center = (cubeFaces[q].v0 + cubeFaces[q].v1 + cubeFaces[q].v2 + cubeFaces[q].v3) * .25f;
+		Vector3 center = (quad.v0 + quad.v1 + quad.v2 + quad.v3) * .25f;
 		Vector3 toCameraView = camera.position - center;
-		float dot = cubeFaces[q].normal.x * toCameraView.x +
-			cubeFaces[q].normal.y * toCameraView.y +
-			cubeFaces[q].normal.z * toCameraView.z;
+		float dot = quad.normal.x * toCameraView.x +
+			quad.normal.y * toCameraView.y +
+			quad.normal.z * toCameraView.z;
 
 		if (dot <= 0.0f)
 			continue;
 
 
 		Vector3 pointsRelativePositions[4] = {
-			convertToCameraSpace(cubeFaces[q].v0, camera),
-			convertToCameraSpace(cubeFaces[q].v1, camera),
-			convertToCameraSpace(cubeFaces[q].v2, camera),
-			convertToCameraSpace(cubeFaces[q].v3, camera)
+			convertToCameraSpace(quad.v0, camera),
+			convertToCameraSpace(quad.v1, camera),
+			convertToCameraSpace(quad.v2, camera),
+			convertToCameraSpace(quad.v3, camera)
 		};
 
 		Vector3 clipped[6];
@@ -50,10 +39,42 @@ void VoxelRenderer::render(Renderer& renderer, Camera& camera)
 			projected[i] = projectViewSpacePoint(clipped[i], camera, renderer.getAspectRatio(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
 
 		for (int i = 1; i + 1 < clippedCount; i++)
-			renderer.drawFilledQuad(projected[0], projected[i], projected[i + 1], projected[i + 1], cubeFaces[q].color + q);
+			renderer.drawFilledQuad(projected[0], projected[i], projected[i + 1], projected[i + 1], quad.color);
 	}
 
 	renderer.drawPixel(2, 5, 10);
+}
+
+void VoxelRenderer::generateChunkMesh(Chunk* chunk, BlockProperties* blockProperties)
+{
+	std::vector<Quad> chunkQuads;
+	chunkQuads.reserve(512);
+
+	for (int x = 0; x < Chunk::SIZE_X; x++)
+	for (int z = 0; z < Chunk::SIZE_Z; z++)
+	for (int y = 0; y < Chunk::SIZE_Y; y++)
+	for (int f = 0; f < 6; f++)
+	{
+		BlockType blockType = chunk->blocks[x][y][z];
+		if (blockType == AIR)
+			continue;
+
+		Quad quad = {};
+		Vector3 positionOffset = { 
+			(float)x + (float)chunk->position.x * Chunk::SIZE_X, 
+			(float)y, 
+			(float)z + (float)chunk->position.y * Chunk::SIZE_Z };
+
+		quad.v0 = cubeVerticesPositions[faceIndices[f][0]] + positionOffset;
+		quad.v1 = cubeVerticesPositions[faceIndices[f][1]] + positionOffset;
+		quad.v2 = cubeVerticesPositions[faceIndices[f][2]] + positionOffset;
+		quad.v3 = cubeVerticesPositions[faceIndices[f][3]] + positionOffset;
+		quad.normal = cubeFacesDirections[f];
+		quad.color = blockProperties[blockType].faceColors[f];
+		chunkQuads.push_back(quad);
+	}
+
+	chunksMeshesByPosition[chunk->position] = chunkQuads;
 }
 
 Vector3 VoxelRenderer::convertToCameraSpace(Vector3& position, Camera& camera)

@@ -127,6 +127,7 @@
     <ClCompile Include="Game\Entities\Player.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
+    <ClCompile Include="World\TerrainGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\DirectionsXZ.h" />
@@ -137,6 +138,10 @@
     <ClInclude Include="Renderer\Vector.h" />
     <ClInclude Include="Renderer\Vertex.h" />
     <ClInclude Include="World\Camera.h" />
+    <ClInclude Include="World\Chunk\Block.h" />
+    <ClInclude Include="World\Chunk\Chunk.h" />
+    <ClInclude Include="World\Noise.h" />
+    <ClInclude Include="World\TerrainGenerator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
