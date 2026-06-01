@@ -4,6 +4,6 @@
 struct Quad
 {
 	Vector3 v0, v1, v2, v3;
-	Vector3 normal;
+	Vector3Int normal;
 	int color;
 };

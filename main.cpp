@@ -15,9 +15,9 @@ int main()
 	terrainGenerator.generateChunk({ 1, 0 });
 	terrainGenerator.generateChunk({ 0, 1 });
 	VoxelRenderer voxelRenderer;
-	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{0, 0}], terrainGenerator.blockProperties);
-	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{1, 0}], terrainGenerator.blockProperties);
-	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{0, 1}], terrainGenerator.blockProperties);
+	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{0, 0}], terrainGenerator.blockProperties, &terrainGenerator);
+	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{1, 0}], terrainGenerator.blockProperties, &terrainGenerator);
+	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{0, 1}], terrainGenerator.blockProperties, &terrainGenerator);
 
 	Camera camera;
 	camera.pitch = 0;

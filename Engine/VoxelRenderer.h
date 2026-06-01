@@ -7,12 +7,13 @@
 #include "../Renderer/Quad.h"
 #include "../World/Camera.h"
 #include "../World/Chunk/Chunk.h"
+#include "../World/TerrainGenerator.h"
 
 class VoxelRenderer
 {
 public:
 	void render(Renderer& renderer, Camera& camera);
-	void generateChunkMesh(Chunk* chunk, BlockProperties* blockProperties);
+	void generateChunkMesh(Chunk* chunk, BlockProperties* blockProperties, TerrainGenerator* terrainGenerator);
 	std::unordered_map<Vector2Int, std::vector<Quad>, Vector2IntHash> chunksMeshesByPosition;
 
 private:
@@ -43,7 +44,7 @@ private:
 		{4,5,1,0}
 	};
 
-	const Vector3 cubeFacesDirections[6] = {
+	const Vector3Int cubeFacesDirections[6] = {
 		{0,0,-1},
 		{0,0,1},
 		{-1,0,0},

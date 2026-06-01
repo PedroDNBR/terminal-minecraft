@@ -18,6 +18,16 @@ void TerrainGenerator::generateChunk(Vector2Int chunkPosition)
 	chunksByPosition[chunkPosition] = chunks.back().get();
 }
 
+bool TerrainGenerator::isTransparent(Chunk* chunk, Vector3Int position)
+{
+	if (position.y < 0 || position.y >= Chunk::SIZE_Y) return true;
+
+	if (position.x >= 0 && position.x < Chunk::SIZE_X && position.z >= 0 && position.z < Chunk::SIZE_Z)
+		return chunk->blocks[position.x][position.y][position.z] == AIR || chunk->blocks[position.x][position.y][position.z] == WATER;
+
+	return true;
+}
+
 std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(Vector2Int chunkPosition)
 {
 	std::unique_ptr<Chunk> chunk = std::make_unique<Chunk>();
