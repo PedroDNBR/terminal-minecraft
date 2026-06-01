@@ -31,7 +31,7 @@ int main()
 
 	Player player(camera);
 	float testingMovementSpeed = 2.f;
-	Vector3 startingPlayerPosition = { 0,0,-2 };
+	Vector3 startingPlayerPosition = { 0,32,-2 };
 	player.setPosition(startingPlayerPosition);
 
 	float deltaTime = 0.1f;

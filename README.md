@@ -4,7 +4,7 @@ Expanding the concept of the [2D Console Graphics Engine](https://github.com/Ped
 
 ### Screenshots (Latest Update):
 
-<img  width="100%" src="https://i.imgur.com/au3v6qx.png" />
+<img  width="100%" src="https://i.imgur.com/lQr4VIF.png" />
 
 ### Progress:
 
@@ -33,6 +33,10 @@ Expanding the concept of the [2D Console Graphics Engine](https://github.com/Ped
     <td align="center">
       <strong>Local chunk occlusion culling</strong><br>
       <img width="100%" src="https://i.imgur.com/au3v6qx.png" />
+    </td>
+    <td align="center">
+      <strong>Basic pseudorandom terrain elevation</strong><br>
+      <img width="100%" src="https://i.imgur.com/lQr4VIF.png" />
     </td>
   </tr>
 </table>
