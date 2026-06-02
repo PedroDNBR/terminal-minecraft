@@ -168,9 +168,19 @@ bool Renderer::hasWindowResized()
 	int newWidth, newHeight;
 	getWindowSize(newWidth, newHeight);
 
-	if (newWidth != logicalWidth || newHeight != logicalHeight)
+	if (newWidth != realWidth || newHeight != realHeight)
 	{
-		setupTerminalWindow();
+		realWidth = newWidth;
+		realHeight = newHeight;
+
+		logicalWidth = realWidth;
+		logicalHeight = realHeight * 2;
+
+		rect = { 0,0,
+				 (SHORT)(realWidth - 1),
+				 (SHORT)(realHeight - 1) };
+
+		resizeBuffers();
 		return true;
 	}
 
@@ -185,19 +195,16 @@ void Renderer::present()
 		int topIndex = (y * 2) * logicalWidth + x;
 		int bottomIndex = (y * 2 + 1) * logicalWidth + x;
 
-		WORD topColor = colorBuffer[topIndex];
-		WORD bottomColor = colorBuffer[bottomIndex];
-
 		CHAR_INFO& cell = screenBuffer[y * realWidth + x];
 		cell.Char.UnicodeChar = L'\u2584';
-		cell.Attributes = (topColor << 4) | bottomColor;
+		cell.Attributes = (colorBuffer[topIndex] << 4) | colorBuffer[bottomIndex];
 	}
 
 	WriteConsoleOutput(
-		handle, 
-		screenBuffer.data(), 
+		handle,
+		screenBuffer.data(),
 		{ (SHORT)realWidth, (SHORT)realHeight },
-		{0, 0},
+		{ 0, 0 },
 		&rect
 	);
 }
