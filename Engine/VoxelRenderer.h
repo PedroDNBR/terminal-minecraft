@@ -17,6 +17,7 @@ public:
 	std::unordered_map<ChunkCoord, std::vector<Quad>, ChunkCoordHash> chunksMeshesByPosition;
 
 	void generateMeshes(ChunkManager& chunkManager);
+	void unloadMeshes(ChunkManager& chunkManager);
 
 private:
 	Vector3 convertToCameraSpace(Vector3& position, Camera& camera);

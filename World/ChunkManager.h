@@ -21,12 +21,15 @@ public:
 	void setBlockProperties();
 	bool isTransparent(Chunk* chunk, Vector3Int position);
 
-	void tick(const Camera& camera);
+	void handleChunkLoad(const Camera& camera);
+	void handleChunkUnload(const Camera& camera);
 
 	int renderDistance = 4;
 
-	std::queue<ChunkCoord> meshingQueue;
+	std::vector<ChunkCoord> meshUnload;
+	std::vector<ChunkCoord> meshingQueue;
 	std::unordered_set<ChunkCoord, ChunkCoordHash> pending;
+	std::vector<ChunkCoord> unload;
 	std::unordered_map<ChunkCoord, std::unique_ptr<Chunk>, ChunkCoordHash> chunksByPosition;
 
 private:

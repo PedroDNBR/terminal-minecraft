@@ -39,11 +39,15 @@ Expanding the concept of the [2D Console Graphics Engine](https://github.com/Ped
       <img width="100%" src="https://i.imgur.com/lQr4VIF.png" />
     </td>
   </tr>
-     <tr>
     <td align="center">
-      <strong>Chunk generation around player position</strong><br>
-      <img width="100%" src="https://i.imgur.com/PWCt7qK.png" />
-    </td>
+        <strong>Chunk generation around player position</strong><br>
+        <img width="100%" src="https://i.imgur.com/PWCt7qK.png" />
+      </td>
+      <td align="center">
+        <strong>Chunk unloading</strong><br>
+        <img width="100%" src="https://i.imgur.com/b4oqJHg.png" />
+      </td>
+    <tr>
 </table>
 
 <br/>

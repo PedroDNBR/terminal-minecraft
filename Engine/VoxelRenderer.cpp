@@ -94,8 +94,18 @@ void VoxelRenderer::generateMeshes(ChunkManager& chunkManager)
 	while (!chunkManager.meshingQueue.empty())
 	{
 		ChunkCoord coord = chunkManager.meshingQueue.front();
-		chunkManager.meshingQueue.pop();
+		chunkManager.meshingQueue.erase(chunkManager.meshingQueue.begin());
 		generateChunkMesh(coord, &chunkManager);
+	}
+}
+
+void VoxelRenderer::unloadMeshes(ChunkManager& chunkManager)
+{
+	while (!chunkManager.meshUnload.empty())
+	{
+		ChunkCoord coord = chunkManager.meshUnload.front();
+		chunkManager.meshUnload.erase(chunkManager.meshUnload.begin());
+		chunksMeshesByPosition.erase(coord);
 	}
 }
 

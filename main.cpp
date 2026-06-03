@@ -44,9 +44,11 @@ int main()
 
 		camera.updateCatheti();
 
-		chunkManager.tick(camera);
+		chunkManager.handleChunkLoad(camera);
+		chunkManager.handleChunkUnload(camera);
 
 		voxelRenderer.generateMeshes(chunkManager);
+		voxelRenderer.unloadMeshes(chunkManager);
 
 		renderer.queueText(2, 1, L"chunksByPosition: " + std::to_wstring(chunkManager.chunksByPosition.size()), 15);
 		renderer.queueText(2, 2, L"pending: " + std::to_wstring(chunkManager.pending.size()), 15);

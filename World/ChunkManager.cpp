@@ -64,7 +64,7 @@ bool ChunkManager::isTransparent(Chunk* chunk, Vector3Int position)
 	return true;
 }
 
-void ChunkManager::tick(const Camera& camera)
+void ChunkManager::handleChunkLoad(const Camera& camera)
 {
 	int chunkX = (int)std::floor(
 		camera.position.x / Chunk::SIZE_X
@@ -98,11 +98,41 @@ void ChunkManager::tick(const Camera& camera)
 	for (auto coord : pending)
 	{
 		chunksByPosition.insert({coord, std::move(terrainGenerator.generateChunkData(coord))});
-		meshingQueue.push(coord);
-		meshingQueue.push(coord + ChunkCoord{1,0});
-		meshingQueue.push(coord + ChunkCoord{0,1});
-		meshingQueue.push(coord + ChunkCoord{-1,0});
-		meshingQueue.push(coord + ChunkCoord{0,-1});
+		meshingQueue.push_back(coord);
+		meshingQueue.push_back(coord + ChunkCoord{1,0});
+		meshingQueue.push_back(coord + ChunkCoord{0,1});
+		meshingQueue.push_back(coord + ChunkCoord{-1,0});
+		meshingQueue.push_back(coord + ChunkCoord{0,-1});
 	}
 	pending.clear();
+}
+
+void ChunkManager::handleChunkUnload(const Camera& camera)
+{
+	unload.clear();
+	meshUnload.clear();
+
+	int chunkX = (int)std::floor(
+		camera.position.x / Chunk::SIZE_X
+	);
+	int chunkZ = (int)std::floor(
+		camera.position.z / Chunk::SIZE_Z
+	);
+
+	for (auto& pair : chunksByPosition)
+	{
+		ChunkCoord coord = pair.first;
+		float teste = std::abs(coord.x - chunkX) > renderDistance;
+		float teste1 = std::abs(coord.z - chunkZ) > renderDistance;
+		if (std::abs(coord.x - chunkX) > renderDistance || std::abs(coord.z - chunkZ) > renderDistance)
+		{
+			unload.push_back(coord);
+			meshUnload.push_back(coord);
+		}
+	}
+
+	for (auto coord : unload)
+	{
+		chunksByPosition.erase(coord);
+	}
 }
