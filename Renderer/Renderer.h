@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <vector>
 #include "Vertex.h"
+#include "RawTextPrint.h"
 
 class Renderer
 {
@@ -15,6 +16,7 @@ public:
 	void drawPixel(int x, int y, WORD color);
 	void drawPixelDepth(int x, int y, float inverseZ, WORD color);
 	void drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD color);
+	void queueText(int x, int y, const std::wstring& text, WORD color);
 	void present();
 
 	WORD backgroundColor = 0;
@@ -39,6 +41,10 @@ private:
 	std::vector<WORD> colorBuffer;
 	std::vector<float> depthBuffer;
 
+	std::vector<RawTextPrint> textToPrint;
+
 	float aspectRatio;
+
+	void drawText(int x, int y, const std::wstring& text, WORD color);
 };
 

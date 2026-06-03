@@ -147,6 +147,30 @@ void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD c
 	}
 }
 
+void Renderer::queueText(int x, int y, const std::wstring& text, WORD color)
+{
+	textToPrint.push_back({ x, y, text, color });
+}
+
+void Renderer::drawText(int x, int y, const std::wstring& text, WORD color)
+{
+	if(y < 0 || y >= logicalHeight)
+		return;
+
+	for (int i = 0; i < text.size(); i++)
+	{
+		int positionX = x + i;
+
+		if (positionX < 0 || positionX >= logicalWidth)
+			return;
+
+		CHAR_INFO& cell = screenBuffer[y * realWidth + positionX];
+
+		cell.Char.UnicodeChar = text[i];
+		cell.Attributes = color;
+	}
+}
+
 void Renderer::getWindowSize(int& width, int& height)
 {
 	CONSOLE_SCREEN_BUFFER_INFO consoleScreenBufferInfo;
@@ -161,6 +185,7 @@ void Renderer::clear()
 	int logicalSize = logicalWidth * logicalHeight;
 	std::fill(colorBuffer.begin(), colorBuffer.end(), backgroundColor);
 	std::fill(depthBuffer.begin(), depthBuffer.end(), 0.0f);
+	textToPrint.clear();
 }
 
 bool Renderer::hasWindowResized()
@@ -198,6 +223,11 @@ void Renderer::present()
 		CHAR_INFO& cell = screenBuffer[y * realWidth + x];
 		cell.Char.UnicodeChar = L'\u2584';
 		cell.Attributes = (colorBuffer[topIndex] << 4) | colorBuffer[bottomIndex];
+	}
+
+	for (const auto& cmd : textToPrint)
+	{
+		drawText(cmd.x, cmd.y, cmd.text, cmd.color);
 	}
 
 	WriteConsoleOutput(

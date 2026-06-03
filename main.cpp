@@ -3,27 +3,17 @@
 #include "Engine/VoxelRenderer.h"
 #include "World/Camera.h"
 #include "Game/Entities/Player.h"
-#include "World/TerrainGenerator.h"
+#include "World/ChunkManager.h"
 
 int main()
 {
 	Renderer renderer(true);
 	renderer.backgroundColor = 11;
 
-	TerrainGenerator terrainGenerator;
-	terrainGenerator.setBlockProperties();
-	terrainGenerator.generateChunk({ 0, 0 });
-	terrainGenerator.generateChunk({ 1, 0 });
-	terrainGenerator.generateChunk({ 0, 1 });
-	terrainGenerator.generateChunk({ -1, 0 });
-	terrainGenerator.generateChunk({ 0, -1 });
+	ChunkManager chunkManager;
+	chunkManager.setBlockProperties();
 
 	VoxelRenderer voxelRenderer;
-	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{0, 0}], terrainGenerator.blockProperties, &terrainGenerator);
-	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{1, 0}], terrainGenerator.blockProperties, &terrainGenerator);
-	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{0, 1}], terrainGenerator.blockProperties, &terrainGenerator);
-	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{-1, 0}], terrainGenerator.blockProperties, &terrainGenerator);
-	voxelRenderer.generateChunkMesh(terrainGenerator.chunksByPosition[{0, -1}], terrainGenerator.blockProperties, &terrainGenerator);
 
 	Camera camera;
 	camera.pitch = 0;
@@ -53,6 +43,15 @@ int main()
 		renderer.clear();
 
 		camera.updateCatheti();
+
+		chunkManager.tick(camera);
+
+		voxelRenderer.generateMeshes(chunkManager);
+
+		renderer.queueText(2, 1, L"chunksByPosition: " + std::to_wstring(chunkManager.chunksByPosition.size()), 15);
+		renderer.queueText(2, 2, L"pending: " + std::to_wstring(chunkManager.pending.size()), 15);
+		renderer.queueText(2, 3, L"meshingQueue: " + std::to_wstring(chunkManager.meshingQueue.size()), 15);
+		renderer.queueText(2, 4, L"chunksMeshesByPosition: " + std::to_wstring(voxelRenderer.chunksMeshesByPosition.size()), 15);
 
 		voxelRenderer.render(renderer, camera);
 

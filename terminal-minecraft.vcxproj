@@ -127,6 +127,7 @@
     <ClCompile Include="Game\Entities\Player.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Renderer\Renderer.cpp" />
+    <ClCompile Include="World\ChunkManager.cpp" />
     <ClCompile Include="World\TerrainGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -134,10 +135,12 @@
     <ClInclude Include="Engine\VoxelRenderer.h" />
     <ClInclude Include="Game\Entities\Player.h" />
     <ClInclude Include="Renderer\Quad.h" />
+    <ClInclude Include="Renderer\RawTextPrint.h" />
     <ClInclude Include="Renderer\Renderer.h" />
     <ClInclude Include="Renderer\Vector.h" />
     <ClInclude Include="Renderer\Vertex.h" />
     <ClInclude Include="World\Camera.h" />
+    <ClInclude Include="World\ChunkManager.h" />
     <ClInclude Include="World\Chunk\Block.h" />
     <ClInclude Include="World\Chunk\Chunk.h" />
     <ClInclude Include="World\Chunk\ChunkCoord.h" />

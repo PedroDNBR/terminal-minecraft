@@ -14,8 +14,8 @@ public:
 	void setRotation(const Vector3& newRotation);
 	void tick(float deltaTime);
 
-	float movementSpeed = 2.f;
-	float cameraSpeed = 40.f;
+	float movementSpeed = 8.f;
+	float cameraSpeed = 80.f;
 
 private:
 	Vector3 position;

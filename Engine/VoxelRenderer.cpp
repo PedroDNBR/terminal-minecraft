@@ -45,8 +45,12 @@ void VoxelRenderer::render(Renderer& renderer, Camera& camera)
 	renderer.drawPixel(2, 5, 10);
 }
 
-void VoxelRenderer::generateChunkMesh(Chunk* chunk, BlockProperties* blockProperties, TerrainGenerator* terrainGenerator)
+void VoxelRenderer::generateChunkMesh(ChunkCoord chunkCoord, ChunkManager* chunkManager)
 {
+	Chunk* chunk = chunkManager->getChunk(chunkCoord);
+	if (chunk == nullptr)
+		return;
+
 	std::vector<Quad> chunkQuads;
 	chunkQuads.reserve(512);
 
@@ -61,7 +65,7 @@ void VoxelRenderer::generateChunkMesh(Chunk* chunk, BlockProperties* blockProper
 			if (blockType == AIR || blockType == WATER)
 				continue;
 
-			if (!terrainGenerator->isTransparent(chunk, blockPosition + cubeFacesDirections[f]))
+			if (!chunkManager->isTransparent(chunk, blockPosition + cubeFacesDirections[f]))
 				continue;
 
 			Quad quad = {};
@@ -75,13 +79,24 @@ void VoxelRenderer::generateChunkMesh(Chunk* chunk, BlockProperties* blockProper
 			quad.v2 = cubeVerticesPositions[faceIndices[f][2]] + positionOffset;
 			quad.v3 = cubeVerticesPositions[faceIndices[f][3]] + positionOffset;
 			quad.normal = cubeFacesDirections[f];
-			quad.color = blockProperties[blockType].faceColors[f];
+			quad.color = chunkManager->blockProperties[blockType].faceColors[f];
 			chunkQuads.push_back(quad);
 		}
 	}
 	
 
 	chunksMeshesByPosition[chunk->position] = chunkQuads;
+}
+
+void VoxelRenderer::generateMeshes(ChunkManager& chunkManager)
+{
+	// will be changed to a thread pool in the future
+	while (!chunkManager.meshingQueue.empty())
+	{
+		ChunkCoord coord = chunkManager.meshingQueue.front();
+		chunkManager.meshingQueue.pop();
+		generateChunkMesh(coord, &chunkManager);
+	}
 }
 
 Vector3 VoxelRenderer::convertToCameraSpace(Vector3& position, Camera& camera)

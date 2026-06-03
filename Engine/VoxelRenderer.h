@@ -7,14 +7,16 @@
 #include "../Renderer/Quad.h"
 #include "../World/Camera.h"
 #include "../World/Chunk/Chunk.h"
-#include "../World/TerrainGenerator.h"
+#include "../World/ChunkManager.h"
 
 class VoxelRenderer
 {
 public:
 	void render(Renderer& renderer, Camera& camera);
-	void generateChunkMesh(Chunk* chunk, BlockProperties* blockProperties, TerrainGenerator* terrainGenerator);
+	void generateChunkMesh(ChunkCoord chunkCoord, ChunkManager* chunkManager);
 	std::unordered_map<ChunkCoord, std::vector<Quad>, ChunkCoordHash> chunksMeshesByPosition;
+
+	void generateMeshes(ChunkManager& chunkManager);
 
 private:
 	Vector3 convertToCameraSpace(Vector3& position, Camera& camera);

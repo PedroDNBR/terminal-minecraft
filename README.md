@@ -4,7 +4,7 @@ Expanding the concept of the [2D Console Graphics Engine](https://github.com/Ped
 
 ### Screenshots (Latest Update):
 
-<img  width="100%" src="https://i.imgur.com/lQr4VIF.png" />
+<img  width="100%" src="https://i.imgur.com/PWCt7qK.png" />
 
 ### Progress:
 
@@ -39,6 +39,11 @@ Expanding the concept of the [2D Console Graphics Engine](https://github.com/Ped
       <img width="100%" src="https://i.imgur.com/lQr4VIF.png" />
     </td>
   </tr>
+     <tr>
+    <td align="center">
+      <strong>Chunk generation around player position</strong><br>
+      <img width="100%" src="https://i.imgur.com/PWCt7qK.png" />
+    </td>
 </table>
 
 <br/>
