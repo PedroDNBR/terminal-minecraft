@@ -132,6 +132,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\DirectionsXZ.h" />
+    <ClInclude Include="Engine\Frustum.h" />
+    <ClInclude Include="Engine\Plane.h" />
     <ClInclude Include="Engine\ReadyMesh.h" />
     <ClInclude Include="Engine\VoxelRenderer.h" />
     <ClInclude Include="Game\Entities\Player.h" />

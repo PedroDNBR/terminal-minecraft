@@ -94,5 +94,11 @@
     <ClInclude Include="Engine\ReadyMesh.h">
       <Filter>World\Chunk</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\Frustum.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Plane.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

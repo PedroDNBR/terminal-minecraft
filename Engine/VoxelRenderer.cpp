@@ -5,41 +5,53 @@ void VoxelRenderer::render(Renderer& renderer, Camera& camera)
 {
 	renderer.drawPixel(2, 2, 15);
 
-	for (auto chunk : chunksMeshesByPosition)
-	for (auto quad : chunk.second)
+	Frustum frustum = buildFrustum(camera, renderer.getAspectRatio(), camera.fovRadius);
+
+	for (const auto& chunk : chunksMeshesByPosition)
 	{
-		renderer.drawPixel(2, 3, 4);
-		Vector3 center = (quad.v0 + quad.v1 + quad.v2 + quad.v3) * .25f;
-		Vector3 toCameraView = camera.position - center;
-		float dot = quad.normal.x * toCameraView.x +
-			quad.normal.y * toCameraView.y +
-			quad.normal.z * toCameraView.z;
+		float minX = chunk.first.x * (float)Chunk::SIZE_X;
+		float minZ = chunk.first.z * (float)Chunk::SIZE_Z;
+		float maxX = minX + Chunk::SIZE_X;
+		float maxZ = minZ + Chunk::SIZE_Z;
 
-		if (dot <= 0.0f)
+		if (frustum.isBoxOutside(minX, 0.f, minZ, maxX, 64.f, maxZ))
 			continue;
 
+		for (const auto& quad : chunk.second)
+		{
+			renderer.drawPixel(2, 3, 4);
+			Vector3 center = (quad.v0 + quad.v1 + quad.v2 + quad.v3) * .25f;
+			Vector3 toCameraView = camera.position - center;
+			float dot = quad.normal.x * toCameraView.x +
+				quad.normal.y * toCameraView.y +
+				quad.normal.z * toCameraView.z;
 
-		Vector3 pointsRelativePositions[4] = {
-			convertToCameraSpace(quad.v0, camera),
-			convertToCameraSpace(quad.v1, camera),
-			convertToCameraSpace(quad.v2, camera),
-			convertToCameraSpace(quad.v3, camera)
-		};
+			if (dot <= 0.0f)
+				continue;
 
-		Vector3 clipped[6];
-		int clippedCount = clipNearPlane(pointsRelativePositions, 4, clipped, camera);
 
-		if (clippedCount < 3)
-			continue;
+			Vector3 pointsRelativePositions[4] = {
+				convertToCameraSpace(quad.v0, camera),
+				convertToCameraSpace(quad.v1, camera),
+				convertToCameraSpace(quad.v2, camera),
+				convertToCameraSpace(quad.v3, camera)
+			};
 
-		renderer.drawPixel(2, 4, 14);
+			Vector3 clipped[6];
+			int clippedCount = clipNearPlane(pointsRelativePositions, 4, clipped, camera);
 
-		Vertex projected[6];
-		for (int i = 0; i < clippedCount; i++)
-			projected[i] = projectViewSpacePoint(clipped[i], camera, renderer.getAspectRatio(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
+			if (clippedCount < 3)
+				continue;
 
-		for (int i = 1; i + 1 < clippedCount; i++)
-			renderer.drawFilledQuad(projected[0], projected[i], projected[i + 1], projected[i + 1], quad.color);
+			renderer.drawPixel(2, 4, 14);
+
+			Vertex projected[6];
+			for (int i = 0; i < clippedCount; i++)
+				projected[i] = projectViewSpacePoint(clipped[i], camera, renderer.getAspectRatio(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
+
+			for (int i = 1; i + 1 < clippedCount; i++)
+				renderer.drawFilledQuad(projected[0], projected[i], projected[i + 1], projected[i + 1], quad.color);
+		}
 	}
 
 	renderer.drawPixel(2, 5, 10);
@@ -55,7 +67,7 @@ void VoxelRenderer::unloadMeshes(ChunkManager& chunkManager)
 	}
 }
 
-Vector3 VoxelRenderer::convertToCameraSpace(Vector3& position, Camera& camera)
+Vector3 VoxelRenderer::convertToCameraSpace(const Vector3& position, Camera& camera)
 {
 	Vector3 relativePosition = position - camera.position;
 	float relativeX = camera.cosYaw * relativePosition.x + camera.sinYaw * relativePosition.z;
@@ -70,7 +82,7 @@ Vector3 VoxelRenderer::convertToCameraSpace(Vector3& position, Camera& camera)
 	return relativePosition;
 }
 
-Vertex VoxelRenderer::projectViewSpacePoint(Vector3& position, Camera& camera, float aspectRatio, int width, int height)
+Vertex VoxelRenderer::projectViewSpacePoint(const Vector3& position, Camera& camera, float aspectRatio, int width, int height)
 {
 	float inverseZ = 1.f / position.z;
 	return {
@@ -105,6 +117,62 @@ int VoxelRenderer::clipNearPlane(Vector3* source, int vertexCount, Vector3* outp
 		}
 	}
 	return outputCount;
+}
+
+Frustum VoxelRenderer::buildFrustum(const Camera& camera, float aspectRatio, float fovRadius)
+{
+	Frustum frustum;
+
+	float cosYaw = cosf(camera.yaw);
+	float sinYaw = sinf(camera.yaw);
+	float cosPitch = cosf(camera.pitch);
+	float sinPitch = sinf(camera.pitch);
+
+	Vector3 forward = { -sinYaw * cosPitch, sinPitch, cosYaw * cosPitch };
+	Vector3 right = { cosYaw, 0, sinYaw };
+	Vector3 up = { sinYaw * sinPitch, cosPitch, -cosYaw * cosPitch };
+
+	float horizontalFov = fovRadius * 0.5f * FRUSTUM_PADDING;
+	float verticalFov = atanf(tanf(fovRadius * 0.5f) / aspectRatio) * FRUSTUM_PADDING;
+	float sinHorizontal = sinf(horizontalFov);
+	float cosHorizontal = cosf(horizontalFov);
+	float sinVertical = sinf(verticalFov);
+	float cosVertical = cosf(verticalFov);
+
+	frustum.planes[0] = makePlane({
+		forward.x * cosHorizontal + right.x * sinHorizontal,
+		forward.y * cosHorizontal + right.y * sinHorizontal, 
+		forward.z * cosHorizontal + right.z * sinHorizontal
+	}, camera);
+
+	frustum.planes[1] = makePlane({
+		forward.x * cosHorizontal - right.x * sinHorizontal,
+		forward.y * cosHorizontal - right.y * sinHorizontal,
+		forward.z * cosHorizontal - right.z * sinHorizontal
+	}, camera);
+
+	frustum.planes[2] = makePlane({
+		forward.x * cosVertical - up.x * sinVertical,
+		forward.y * cosVertical - up.y * sinVertical,
+		forward.z * cosVertical - up.z * sinVertical
+	}, camera);
+
+	frustum.planes[3] = makePlane({
+		forward.x * cosVertical - up.x * sinVertical,
+		forward.y * cosVertical - up.y * sinVertical,
+		forward.z * cosVertical - up.z * sinVertical
+	}, camera);
+
+	frustum.planes[4] = { 0, 0, 0, 1 };
+	frustum.planes[5] = { 0, 0, 0, 1 };
+
+	return frustum;
+}
+
+Plane VoxelRenderer::makePlane(Vector3 normal, const Camera& camera)
+{
+	float d = -(normal.x * camera.position.x + normal.y * camera.position.y + normal.z * camera.position.z);
+	return { normal.x, normal.y, normal.z, d };
 }
 
 void VoxelRenderer::meshBuilderWorker(ChunkManager& chunkManager)

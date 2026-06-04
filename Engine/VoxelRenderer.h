@@ -9,6 +9,7 @@
 #include "../World/Camera.h"
 #include "../World/Chunk/Chunk.h"
 #include "../World/ChunkManager.h"
+#include "Frustum.h"
 
 class VoxelRenderer
 {
@@ -21,14 +22,20 @@ public:
 	void commitReadyMeshes();
 
 private:
-	Vector3 convertToCameraSpace(Vector3& position, Camera& camera);
-	Vertex projectViewSpacePoint(Vector3& position, Camera& camera, float aspectRatio, int width, int height);
+	Vector3 convertToCameraSpace(const Vector3& position, Camera& camera);
+	Vertex projectViewSpacePoint(const Vector3& position, Camera& camera, float aspectRatio, int width, int height);
 	int clipNearPlane(Vector3* source, int vertexCount, Vector3* output, Camera& camera);
+
+	Frustum buildFrustum(const Camera& camera, float aspectRatio, float fovRadius);
+	Plane makePlane(Vector3 normal, const Camera& camera);
 
 	std::queue<ReadyMesh> readyMeshes;
 	std::mutex readyMeshesMutex;
 
 	std::vector<Quad> buildMeshData(Chunk* chunk, ChunkManager& chunkManager);
+
+	const float FRUSTUM_PADDING = 0.087f;
+
 
 	const Vector3 cubeVerticesPositions[8] = {
 		{0,0,0},
