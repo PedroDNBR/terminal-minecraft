@@ -84,32 +84,26 @@ void ChunkManager::handleChunkLoad(const Camera& camera)
 	int startZ = chunkZ - renderDistance;
 	int endZ = chunkZ + renderDistance;
 
-	for (int x = startX; x <= endX; x++)
-	for (int z = startZ; z <= endZ; z++)
+	bool anyNew = false;
 	{
-		ChunkCoord coord{ x, z };
-		if(chunksByPosition.count(coord) == 0)
-		{
-			pending.insert(coord);
-		}
-	}
+		for (int x = startX; x <= endX; x++)
+			for (int z = startZ; z <= endZ; z++)
+			{
+				ChunkCoord coord{ x, z };
+				if (pending.count(coord) == 0)
+				{
+					pending.insert(coord);
+					anyNew = true;
+				}
+			}
 
-	// will be changed to a thread pool in the future
-	for (auto coord : pending)
-	{
-		chunksByPosition.insert({coord, std::move(terrainGenerator.generateChunkData(coord))});
-		meshingQueue.push_back(coord);
-		meshingQueue.push_back(coord + ChunkCoord{1,0});
-		meshingQueue.push_back(coord + ChunkCoord{0,1});
-		meshingQueue.push_back(coord + ChunkCoord{-1,0});
-		meshingQueue.push_back(coord + ChunkCoord{0,-1});
+		if (anyNew)
+			pendingConditionVariable.notify_one();
 	}
-	pending.clear();
 }
 
 void ChunkManager::handleChunkUnload(const Camera& camera)
 {
-	unload.clear();
 	meshUnload.clear();
 
 	int chunkX = (int)std::floor(
@@ -119,20 +113,104 @@ void ChunkManager::handleChunkUnload(const Camera& camera)
 		camera.position.z / Chunk::SIZE_Z
 	);
 
-	for (auto& pair : chunksByPosition)
+	std::vector<ChunkCoord> unload;
+
 	{
-		ChunkCoord coord = pair.first;
-		float teste = std::abs(coord.x - chunkX) > renderDistance;
-		float teste1 = std::abs(coord.z - chunkZ) > renderDistance;
-		if (std::abs(coord.x - chunkX) > renderDistance || std::abs(coord.z - chunkZ) > renderDistance)
+		std::shared_lock<std::shared_mutex> rlock(chunksMutex);
+		for (auto& pair : chunksByPosition)
 		{
-			unload.push_back(coord);
-			meshUnload.push_back(coord);
+			ChunkCoord coord = pair.first;
+			if (std::abs(coord.x - chunkX) > renderDistance || std::abs(coord.z - chunkZ) > renderDistance)
+			{
+				unload.push_back(coord);
+				meshUnload.push_back(coord);
+			}
 		}
 	}
 
-	for (auto coord : unload)
+	if (unload.empty())
+		return;
+
+	std::vector<std::unique_ptr<Chunk>> toDestroy;
+	toDestroy.reserve(unload.size());
 	{
-		chunksByPosition.erase(coord);
+		std::unique_lock<std::shared_mutex> wlock(chunksMutex);
+		for (auto& coord : unload)
+		{
+			auto it = chunksByPosition.find(coord);
+			if (it != chunksByPosition.end())
+			{
+				toDestroy.push_back(std::move(it->second));
+				chunksByPosition.erase(it);
+			}
+		}
+	}
+
+	{
+		std::lock_guard<std::mutex> plock(pendingMutex);
+
+		for (auto& coord : unload)
+			pending.erase(coord);
+	}
+}
+
+void ChunkManager::commitLoadedChunks()
+{
+	std::queue<LoadedChunk> local;
+	{
+		std::lock_guard<std::mutex> lock(readyChunksMutex);
+		std::swap(local, readyChunks);
+	}
+
+	while (!local.empty())
+	{
+		LoadedChunk& loadedChunk = local.front();
+		{
+			std::unique_lock<std::shared_mutex> wlock(chunksMutex);
+			chunksByPosition.insert({ loadedChunk.coord, std::move(loadedChunk.chunk) });
+		}
+		{
+			std::lock_guard<std::mutex> lock(meshingQueueMutex);
+			meshingQueue.push(loadedChunk.coord);
+			meshingQueue.push(loadedChunk.coord + ChunkCoord{ 1,  0 });
+			meshingQueue.push(loadedChunk.coord + ChunkCoord{ -1,  0 });
+			meshingQueue.push(loadedChunk.coord + ChunkCoord{ 0,  1 });
+			meshingQueue.push(loadedChunk.coord + ChunkCoord{ 0, -1 });
+		}
+		meshingQueueConditionVariable.notify_one();
+		local.pop();
+	}
+}
+
+void ChunkManager::chunkLoaderWorker()
+{
+	while (running)
+	{
+		ChunkCoord coord;
+		{
+			std::unique_lock<std::mutex> lock(pendingMutex);
+			pendingConditionVariable.wait(lock, [this] {
+				return !pending.empty() || !running;
+			});
+			if(!running)
+				break;
+
+			auto iteration = pending.begin();
+			coord = *iteration;
+			pending.erase(iteration);
+		}
+
+		{
+			std::shared_lock<std::shared_mutex> rlock(chunksMutex);
+			if(chunksByPosition.count(coord) > 0)
+				continue;
+		}
+
+		auto chunk = terrainGenerator.generateChunkData(coord);
+		
+		{
+			std::lock_guard<std::mutex> lock(readyChunksMutex);
+			readyChunks.push({ coord, std::move(chunk) });
+		}
 	}
 }

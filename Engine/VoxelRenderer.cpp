@@ -45,60 +45,6 @@ void VoxelRenderer::render(Renderer& renderer, Camera& camera)
 	renderer.drawPixel(2, 5, 10);
 }
 
-void VoxelRenderer::generateChunkMesh(ChunkCoord chunkCoord, ChunkManager* chunkManager)
-{
-	Chunk* chunk = chunkManager->getChunk(chunkCoord);
-	if (chunk == nullptr)
-		return;
-
-	std::vector<Quad> chunkQuads;
-	chunkQuads.reserve(512);
-
-	for (int x = 0; x < Chunk::SIZE_X; x++)
-	for (int z = 0; z < Chunk::SIZE_Z; z++)
-	for (int y = 0; y < Chunk::SIZE_Y; y++)
-	{
-		Vector3Int blockPosition = { x,y,z };
-		for (int f = 0; f < 6; f++)
-		{
-			BlockType blockType = chunk->blocks[x][y][z];
-			if (blockType == AIR || blockType == WATER)
-				continue;
-
-			if (!chunkManager->isTransparent(chunk, blockPosition + cubeFacesDirections[f]))
-				continue;
-
-			Quad quad = {};
-			Vector3 positionOffset = {
-				(float)x + (float)chunk->position.x * Chunk::SIZE_X,
-				(float)y,
-				(float)z + (float)chunk->position.z * Chunk::SIZE_Z };
-
-			quad.v0 = cubeVerticesPositions[faceIndices[f][0]] + positionOffset;
-			quad.v1 = cubeVerticesPositions[faceIndices[f][1]] + positionOffset;
-			quad.v2 = cubeVerticesPositions[faceIndices[f][2]] + positionOffset;
-			quad.v3 = cubeVerticesPositions[faceIndices[f][3]] + positionOffset;
-			quad.normal = cubeFacesDirections[f];
-			quad.color = chunkManager->blockProperties[blockType].faceColors[f];
-			chunkQuads.push_back(quad);
-		}
-	}
-	
-
-	chunksMeshesByPosition[chunk->position] = chunkQuads;
-}
-
-void VoxelRenderer::generateMeshes(ChunkManager& chunkManager)
-{
-	// will be changed to a thread pool in the future
-	while (!chunkManager.meshingQueue.empty())
-	{
-		ChunkCoord coord = chunkManager.meshingQueue.front();
-		chunkManager.meshingQueue.erase(chunkManager.meshingQueue.begin());
-		generateChunkMesh(coord, &chunkManager);
-	}
-}
-
 void VoxelRenderer::unloadMeshes(ChunkManager& chunkManager)
 {
 	while (!chunkManager.meshUnload.empty())
@@ -159,4 +105,86 @@ int VoxelRenderer::clipNearPlane(Vector3* source, int vertexCount, Vector3* outp
 		}
 	}
 	return outputCount;
+}
+
+void VoxelRenderer::meshBuilderWorker(ChunkManager& chunkManager)
+{
+	while (chunkManager.running)
+	{
+		ChunkCoord coord;
+		{
+			std::unique_lock<std::mutex> lock(chunkManager.meshingQueueMutex);
+			chunkManager.meshingQueueConditionVariable.wait(lock, [&chunkManager] {
+				return !chunkManager.meshingQueue.empty() || !chunkManager.running;
+			});
+			if (!chunkManager.running)
+				break;
+
+			coord = chunkManager.meshingQueue.front();
+			chunkManager.meshingQueue.pop();
+		}
+
+		std::vector<Quad> quads;
+		{
+			std::shared_lock<std::shared_mutex> rlock(chunkManager.chunksMutex);
+			Chunk* chunk = chunkManager.getChunk(coord);
+			if (chunk == nullptr)
+				continue;
+			quads = buildMeshData(chunk, chunkManager);
+		}
+
+		{
+			std::lock_guard<std::mutex> lock(readyMeshesMutex);
+			readyMeshes.push({ coord, std::move(quads) });
+		}
+	}
+}
+
+void VoxelRenderer::commitReadyMeshes()
+{
+	std::lock_guard<std::mutex> lock(readyMeshesMutex);
+	while (!readyMeshes.empty())
+	{
+		ReadyMesh& readyMesh = readyMeshes.front();
+		chunksMeshesByPosition[readyMesh.coord] = std::move(readyMesh.quads);
+		readyMeshes.pop();
+	}
+}
+
+std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, ChunkManager& chunkManager)
+{
+	std::vector<Quad> chunkQuads;
+	chunkQuads.reserve(512);
+
+	for (int x = 0; x < Chunk::SIZE_X; x++)
+	for (int z = 0; z < Chunk::SIZE_Z; z++)
+	for (int y = 0; y < Chunk::SIZE_Y; y++)
+	{
+		BlockType blockType = chunk->blocks[x][y][z];
+		if (blockType == AIR || blockType == WATER)
+			continue;
+
+		Vector3Int blockPosition = { x,y,z };
+
+		for (int f = 0; f < 6; f++)
+		{
+			if (!chunkManager.isTransparent(chunk, blockPosition + cubeFacesDirections[f]))
+				continue;
+
+			Quad quad = {};
+			Vector3 positionOffset = {
+				(float)x + (float)chunk->position.x * Chunk::SIZE_X,
+				(float)y,
+				(float)z + (float)chunk->position.z * Chunk::SIZE_Z };
+
+			quad.v0 = cubeVerticesPositions[faceIndices[f][0]] + positionOffset;
+			quad.v1 = cubeVerticesPositions[faceIndices[f][1]] + positionOffset;
+			quad.v2 = cubeVerticesPositions[faceIndices[f][2]] + positionOffset;
+			quad.v3 = cubeVerticesPositions[faceIndices[f][3]] + positionOffset;
+			quad.normal = cubeFacesDirections[f];
+			quad.color = chunkManager.blockProperties[blockType].faceColors[f];
+			chunkQuads.push_back(quad);
+		}
+	}
+	return chunkQuads;
 }

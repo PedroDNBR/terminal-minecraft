@@ -90,5 +90,9 @@
     <ClInclude Include="Renderer\RawTextPrint.h">
       <Filter>Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="World\Chunk\LoadedChunk.h" />
+    <ClInclude Include="Engine\ReadyMesh.h">
+      <Filter>World\Chunk</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

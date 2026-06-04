@@ -132,6 +132,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\DirectionsXZ.h" />
+    <ClInclude Include="Engine\ReadyMesh.h" />
     <ClInclude Include="Engine\VoxelRenderer.h" />
     <ClInclude Include="Game\Entities\Player.h" />
     <ClInclude Include="Renderer\Quad.h" />
@@ -144,6 +145,7 @@
     <ClInclude Include="World\Chunk\Block.h" />
     <ClInclude Include="World\Chunk\Chunk.h" />
     <ClInclude Include="World\Chunk\ChunkCoord.h" />
+    <ClInclude Include="World\Chunk\LoadedChunk.h" />
     <ClInclude Include="World\Noise.h" />
     <ClInclude Include="World\TerrainGenerator.h" />
   </ItemGroup>
