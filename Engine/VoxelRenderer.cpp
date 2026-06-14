@@ -59,12 +59,10 @@ void VoxelRenderer::render(Renderer& renderer, Camera& camera)
 
 void VoxelRenderer::unloadMeshes(ChunkManager& chunkManager)
 {
-	while (!chunkManager.meshUnload.empty())
-	{
-		ChunkCoord coord = chunkManager.meshUnload.front();
-		chunkManager.meshUnload.erase(chunkManager.meshUnload.begin());
+	for (const ChunkCoord& coord : chunkManager.meshUnload)
 		chunksMeshesByPosition.erase(coord);
-	}
+
+	chunkManager.meshUnload.clear();
 }
 
 Vector3 VoxelRenderer::convertToCameraSpace(const Vector3& position, Camera& camera)
@@ -182,27 +180,30 @@ void VoxelRenderer::meshBuilderWorker(ChunkManager& chunkManager)
 		ChunkCoord coord;
 		{
 			std::unique_lock<std::mutex> lock(chunkManager.meshingQueueMutex);
-			chunkManager.meshingQueueConditionVariable.wait(lock, [&chunkManager] {
+			chunkManager.meshingQueueCV.wait(lock, [&] {
 				return !chunkManager.meshingQueue.empty() || !chunkManager.running;
 			});
-			if (!chunkManager.running)
-				break;
-
+			if (!chunkManager.running) break;
 			coord = chunkManager.meshingQueue.front();
 			chunkManager.meshingQueue.pop();
 		}
 
-		std::vector<Quad> quads;
+		std::shared_ptr<Chunk> chunk, negativeX, positiveX, negativeZ, positiveZ;
 		{
 			std::shared_lock<std::shared_mutex> rlock(chunkManager.chunksMutex);
-			Chunk* chunk = chunkManager.getChunk(coord);
-			if (chunk == nullptr)
+			auto iteration = chunkManager.chunks.find(coord);
+			if (iteration == chunkManager.chunks.end())
 				continue;
-			quads = buildMeshData(chunk, chunkManager);
+			chunk = iteration->second;
+			negativeX = chunkManager.getChunkSharedPtr({ coord.x - 1, coord.z });
+			positiveX = chunkManager.getChunkSharedPtr({ coord.x + 1, coord.z });
+			negativeZ = chunkManager.getChunkSharedPtr({ coord.x, coord.z - 1 });
+			positiveZ = chunkManager.getChunkSharedPtr({ coord.x, coord.z + 1 });
 		}
 
+		auto quads = buildMeshData(chunk.get(), chunkManager);
 		{
-			std::lock_guard<std::mutex> lock(readyMeshesMutex);
+			std::lock_guard<std::mutex> rlock(readyMeshesMutex);
 			readyMeshes.push({ coord, std::move(quads) });
 		}
 	}

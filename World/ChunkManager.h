@@ -11,7 +11,9 @@
 #include "Chunk/ChunkCoord.h"
 #include "Chunk/LoadedChunk.h"
 #include "Chunk/Chunk.h"
+#include "Chunk/ChunkLoadRequest.h"
 #include "../Renderer/Vector.h"
+#include "../Engine/MPSCQueue.h"
 
 
 class ChunkManager
@@ -19,35 +21,43 @@ class ChunkManager
 public:
 	ChunkManager();
 
+	int renderDistance = 4;
+	int unloadDistance = 16;
 	BlockProperties blockProperties[BlockType::MAX] = {};
 
+	std::priority_queue<
+		ChunkLoadRequest,
+		std::vector<ChunkLoadRequest>,
+		std::greater<ChunkLoadRequest>
+	> loadQueue;
+	std::mutex loadQueueMutex;
+	std::condition_variable loadQueueCV;
+
+	MPSCQueue<std::shared_ptr<Chunk>> loadedChunksQueue;
+
+	std::unordered_map<ChunkCoord, std::shared_ptr<Chunk>, ChunkCoordHash> chunks;
+	mutable std::shared_mutex chunksMutex;
+
+	std::atomic<bool> running{ true };
+
+	std::unordered_set<ChunkCoord, ChunkCoordHash> pendingCoords;
+	std::mutex pendingMutex;
+
+	std::queue<ChunkCoord> meshingQueue;
+	std::mutex meshingQueueMutex;
+	std::condition_variable meshingQueueCV;
+
+	std::vector<ChunkCoord> meshUnload;
+
 	Chunk* getChunk(ChunkCoord coord);
+	std::shared_ptr<Chunk> getChunkSharedPtr(ChunkCoord coord);
+
 	void setBlockProperties();
 	bool isTransparent(Chunk* chunk, Vector3Int position);
 
 	void handleChunkLoad(const Camera& camera);
 	void handleChunkUnload(const Camera& camera);
 	void commitLoadedChunks();
-
-	int renderDistance = 4;
-
-	std::unordered_map<ChunkCoord, std::unique_ptr<Chunk>, ChunkCoordHash> chunksByPosition;
-	std::shared_mutex chunksMutex;
-
-	std::unordered_set<ChunkCoord, ChunkCoordHash> pending;
-	std::mutex pendingMutex;
-	std::condition_variable pendingConditionVariable;
-
-	std::queue<LoadedChunk> readyChunks;
-	std::mutex readyChunksMutex;
-
-	std::queue<ChunkCoord> meshingQueue;
-	std::mutex meshingQueueMutex;
-	std::condition_variable meshingQueueConditionVariable;
-
-	std::vector<ChunkCoord> meshUnload;
-
-	std::atomic<bool> running{ false };
 	void chunkLoaderWorker();
 
 private:

@@ -21,7 +21,7 @@ public:
 
 	WORD backgroundColor = 0;
 
-	int getAspectRatio()  const { return aspectRatio; }
+	float getAspectRatio()  const { return aspectRatio; }
 	int getLogicalWidth()  const { return logicalWidth; }
 	int getLogicalHeight() const { return logicalHeight; }
 	int getRealWidth()     const { return realWidth; }

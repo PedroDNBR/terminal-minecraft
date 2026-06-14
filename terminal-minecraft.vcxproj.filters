@@ -100,5 +100,14 @@
     <ClInclude Include="Engine\Plane.h">
       <Filter>Engine</Filter>
     </ClInclude>
+    <ClInclude Include="ReadyMesh.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Chunk\ChunkLoadRequest.h">
+      <Filter>World\Chunk</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\MPSCQueue.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

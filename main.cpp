@@ -48,8 +48,8 @@ int main()
 	auto lastTime = std::chrono::high_resolution_clock::now();
 	auto now = std::chrono::high_resolution_clock::now();
 
-	float fpsTimer = 0.0f;
-	int   fpsCounter = 0, currentFPS = 0;
+	auto fpsWinStart = std::chrono::high_resolution_clock::now();
+	int  fpsCounter = 0, currentFPS = 0;
 
 	while (true)
 	{
@@ -60,7 +60,8 @@ int main()
 
 		player.tick(deltaTime);
 
-		renderer.hasWindowResized();
+		if(fpsCounter == 0)
+			renderer.hasWindowResized();
 
 		renderer.clear();
 
@@ -74,8 +75,8 @@ int main()
 		voxelRenderer.unloadMeshes(chunkManager);
 
 		renderer.queueText(2, 0, L"FPS: " + std::to_wstring(currentFPS), 15);
-		renderer.queueText(2, 1, L"chunksByPosition: " + std::to_wstring(chunkManager.chunksByPosition.size()), 15);
-		renderer.queueText(2, 2, L"pending: " + std::to_wstring(chunkManager.pending.size()), 15);
+		renderer.queueText(2, 1, L"chunks: " + std::to_wstring(chunkManager.chunks.size()), 15);
+		renderer.queueText(2, 2, L"pending: " + std::to_wstring(chunkManager.pendingCoords.size()), 15);
 		renderer.queueText(2, 3, L"meshingQueue: " + std::to_wstring(chunkManager.meshingQueue.size()), 15);
 		renderer.queueText(2, 4, L"chunksMeshesByPosition: " + std::to_wstring(voxelRenderer.chunksMeshesByPosition.size()), 15);
 
@@ -83,18 +84,19 @@ int main()
 
 		renderer.present();
 
-		fpsTimer += deltaTime;
 		fpsCounter++;
-		if (fpsTimer >= 1.0f) {
+		auto  fpsNow = std::chrono::high_resolution_clock::now();
+		float fpsElapsed = std::chrono::duration<float>(fpsNow - fpsWinStart).count();
+		if (fpsElapsed >= 1.0f) {
 			currentFPS = fpsCounter;
 			fpsCounter = 0;
-			fpsTimer -= 1.0f;
+			fpsWinStart = fpsNow;
 		}
 	}
 
 	chunkManager.running = false;
-	chunkManager.pendingConditionVariable.notify_all();
-	chunkManager.meshingQueueConditionVariable.notify_all();
+	chunkManager.loadQueueCV.notify_all();
+	chunkManager.meshingQueueCV.notify_all();
 	for (auto& work : workers) 
 		work.join();
 	return 0;

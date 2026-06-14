@@ -7,12 +7,22 @@ ChunkManager::ChunkManager()
 
 Chunk* ChunkManager::getChunk(ChunkCoord coord)
 {
-	auto it = chunksByPosition.find(coord);
+	auto it = chunks.find(coord);
 
-	if (it == chunksByPosition.end())
+	if (it == chunks.end())
 		return nullptr;
 
 	return it->second.get();
+}
+
+std::shared_ptr<Chunk> ChunkManager::getChunkSharedPtr(ChunkCoord coord)
+{
+	auto it = chunks.find(coord);
+
+	if (it == chunks.end())
+		return nullptr;
+
+	return it->second;
 }
 
 void ChunkManager::setBlockProperties()
@@ -73,112 +83,74 @@ void ChunkManager::handleChunkLoad(const Camera& camera)
 		camera.position.z / Chunk::SIZE_Z
 	);
 
-	if(chunkX == lastCameraChunkX && chunkZ == lastCameraChunkZ)
-		return;
-
-	lastCameraChunkX = chunkX;
-	lastCameraChunkZ = chunkZ;
-
-	int startX = chunkX - renderDistance;
-	int endX = chunkX + renderDistance;
-	int startZ = chunkZ - renderDistance;
-	int endZ = chunkZ + renderDistance;
-
-	bool anyNew = false;
+	for (int distanceZ = -renderDistance; distanceZ <= renderDistance; distanceZ++)
+	for (int distanceX = -renderDistance; distanceX <= renderDistance; distanceX++)
 	{
-		for (int x = startX; x <= endX; x++)
-			for (int z = startZ; z <= endZ; z++)
-			{
-				ChunkCoord coord{ x, z };
-				if (pending.count(coord) == 0)
-				{
-					pending.insert(coord);
-					anyNew = true;
-				}
-			}
+		ChunkCoord coord{ chunkX + distanceX, chunkZ + distanceZ };
+		float distanceSq = (float)(distanceX * distanceX + distanceZ * distanceZ);
 
-		if (anyNew)
-			pendingConditionVariable.notify_one();
+		{
+			std::shared_lock<std::shared_mutex> rlock(chunksMutex);
+			if (chunks.count(coord)) continue;
+		}
+		{
+			std::lock_guard<std::mutex> lock(pendingMutex);
+			if (pendingCoords.count(coord)) continue;
+			pendingCoords.insert(coord);
+		}
+
+		{
+			std::lock_guard<std::mutex> lock(loadQueueMutex);
+			loadQueue.push({ coord, distanceSq });
+		}
+		loadQueueCV.notify_one();
 	}
 }
 
 void ChunkManager::handleChunkUnload(const Camera& camera)
 {
-	meshUnload.clear();
+	int chunkX = (int)floor(camera.position.x / Chunk::SIZE_X);
+	int chunkZ = (int)floor(camera.position.z / Chunk::SIZE_Z);
 
-	int chunkX = (int)std::floor(
-		camera.position.x / Chunk::SIZE_X
-	);
-	int chunkZ = (int)std::floor(
-		camera.position.z / Chunk::SIZE_Z
-	);
-
-	std::vector<ChunkCoord> unload;
+	std::vector<ChunkCoord> toRemove;
 
 	{
 		std::shared_lock<std::shared_mutex> rlock(chunksMutex);
-		for (auto& pair : chunksByPosition)
+		for (const auto& [coord, chunks] : chunks)
 		{
-			ChunkCoord coord = pair.first;
-			if (std::abs(coord.x - chunkX) > renderDistance || std::abs(coord.z - chunkZ) > renderDistance)
-			{
-				unload.push_back(coord);
-				meshUnload.push_back(coord);
-			}
+			int distanceX = coord.x - chunkX;
+			int distanceZ = coord.z - chunkZ;
+			if (distanceX * distanceX + distanceZ * distanceZ > unloadDistance * unloadDistance)
+				toRemove.push_back(coord);
 		}
 	}
 
-	if (unload.empty())
-		return;
-
-	std::vector<std::unique_ptr<Chunk>> toDestroy;
-	toDestroy.reserve(unload.size());
+	if (!toRemove.empty())
 	{
 		std::unique_lock<std::shared_mutex> wlock(chunksMutex);
-		for (auto& coord : unload)
+		for (const auto& coord : toRemove)
 		{
-			auto it = chunksByPosition.find(coord);
-			if (it != chunksByPosition.end())
-			{
-				toDestroy.push_back(std::move(it->second));
-				chunksByPosition.erase(it);
-			}
+			meshUnload.push_back(coord);
+			chunks.erase(coord);
 		}
-	}
-
-	{
-		std::lock_guard<std::mutex> plock(pendingMutex);
-
-		for (auto& coord : unload)
-			pending.erase(coord);
 	}
 }
 
 void ChunkManager::commitLoadedChunks()
 {
-	std::queue<LoadedChunk> local;
+	std::shared_ptr<Chunk> chunk;
+	while (loadedChunksQueue.pop(chunk))
 	{
-		std::lock_guard<std::mutex> lock(readyChunksMutex);
-		std::swap(local, readyChunks);
-	}
-
-	while (!local.empty())
-	{
-		LoadedChunk& loadedChunk = local.front();
+		ChunkCoord coord = chunk->position;
 		{
 			std::unique_lock<std::shared_mutex> wlock(chunksMutex);
-			chunksByPosition.insert({ loadedChunk.coord, std::move(loadedChunk.chunk) });
+			chunks[coord] = std::move(chunk);
 		}
 		{
 			std::lock_guard<std::mutex> lock(meshingQueueMutex);
-			meshingQueue.push(loadedChunk.coord);
-			meshingQueue.push(loadedChunk.coord + ChunkCoord{ 1,  0 });
-			meshingQueue.push(loadedChunk.coord + ChunkCoord{ -1,  0 });
-			meshingQueue.push(loadedChunk.coord + ChunkCoord{ 0,  1 });
-			meshingQueue.push(loadedChunk.coord + ChunkCoord{ 0, -1 });
+			meshingQueue.push(coord);
 		}
-		meshingQueueConditionVariable.notify_one();
-		local.pop();
+		meshingQueueCV.notify_one();
 	}
 }
 
@@ -186,31 +158,26 @@ void ChunkManager::chunkLoaderWorker()
 {
 	while (running)
 	{
-		ChunkCoord coord;
+		ChunkLoadRequest request;
+
 		{
-			std::unique_lock<std::mutex> lock(pendingMutex);
-			pendingConditionVariable.wait(lock, [this] {
-				return !pending.empty() || !running;
+			std::unique_lock<std::mutex> lock(loadQueueMutex);
+			loadQueueCV.wait(lock, [&] {
+				return !loadQueue.empty() || !running;
 			});
-			if(!running)
+			if (!running)
 				break;
-
-			auto iteration = pending.begin();
-			coord = *iteration;
-			pending.erase(iteration);
+			request = loadQueue.top();
+			loadQueue.pop();
 		}
+
+		auto chunk = terrainGenerator.generateChunkData(request.coord);
 
 		{
-			std::shared_lock<std::shared_mutex> rlock(chunksMutex);
-			if(chunksByPosition.count(coord) > 0)
-				continue;
+			std::lock_guard<std::mutex> lock(pendingMutex);
+			pendingCoords.erase(request.coord);
 		}
 
-		auto chunk = terrainGenerator.generateChunkData(coord);
-		
-		{
-			std::lock_guard<std::mutex> lock(readyChunksMutex);
-			readyChunks.push({ coord, std::move(chunk) });
-		}
+		loadedChunksQueue.push(std::move(chunk));
 	}
 }
