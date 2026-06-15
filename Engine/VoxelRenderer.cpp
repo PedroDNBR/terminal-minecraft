@@ -189,6 +189,7 @@ void VoxelRenderer::meshBuilderWorker(ChunkManager& chunkManager)
 		}
 
 		std::shared_ptr<Chunk> chunk, negativeX, positiveX, negativeZ, positiveZ;
+		std::vector<Quad> quads;
 		{
 			std::shared_lock<std::shared_mutex> rlock(chunkManager.chunksMutex);
 			auto iteration = chunkManager.chunks.find(coord);
@@ -199,9 +200,9 @@ void VoxelRenderer::meshBuilderWorker(ChunkManager& chunkManager)
 			positiveX = chunkManager.getChunkSharedPtr({ coord.x + 1, coord.z });
 			negativeZ = chunkManager.getChunkSharedPtr({ coord.x, coord.z - 1 });
 			positiveZ = chunkManager.getChunkSharedPtr({ coord.x, coord.z + 1 });
+			quads = buildMeshData(chunk.get(), chunkManager);
 		}
 
-		auto quads = buildMeshData(chunk.get(), chunkManager);
 		{
 			std::lock_guard<std::mutex> rlock(readyMeshesMutex);
 			readyMeshes.push({ coord, std::move(quads) });
@@ -225,35 +226,108 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, ChunkManager& chunk
 	std::vector<Quad> chunkQuads;
 	chunkQuads.reserve(512);
 
-	for (int x = 0; x < Chunk::SIZE_X; x++)
-	for (int z = 0; z < Chunk::SIZE_Z; z++)
-	for (int y = 0; y < Chunk::SIZE_Y; y++)
+	const float offsetX = chunk->position.x * Chunk::SIZE_X;
+	const float offsetZ = chunk->position.z * Chunk::SIZE_Z;
+
+	int mask[MAX_SLICE];
+	bool used[MAX_SLICE];
+
+	for (int f = 0; f < 6; f++)
 	{
-		BlockType blockType = chunk->blocks[x][y][z];
-		if (blockType == AIR || blockType == WATER)
-			continue;
+		int normalAxis = (cubeFacesDirections[f][0] != 0) ? 0 : (cubeFacesDirections[f][1] != 0) ? 1 : 2;
+		int uAxis = (normalAxis == 0) ? 1 : 0;
+		int vAxis = (normalAxis == 2) ? 1 : 2;
 
-		Vector3Int blockPosition = { x,y,z };
+		int sizeNormal = sizes[normalAxis];
+		int sizeU = sizes[uAxis];
+		int sizeV = sizes[vAxis];
 
-		for (int f = 0; f < 6; f++)
+		for (int n = 0; n < sizeNormal; n++)
 		{
-			if (!chunkManager.isTransparent(chunk, blockPosition + cubeFacesDirections[f]))
-				continue;
+			for (int u = 0; u < sizeU; u++)
+			for (int v = 0; v < sizeV; v++)
+			{
+				int coordinates[3];
+				coordinates[normalAxis] = n;
+				coordinates[uAxis] = u;
+				coordinates[vAxis] = v;
+	
+				BlockType blockType = chunk->blocks[coordinates[0]][coordinates[1]][coordinates[2]];
+				int neighbourChunks[3] = {
+					coordinates[0] + cubeFacesDirections[f][0],
+					coordinates[1] + cubeFacesDirections[f][1],
+					coordinates[2] + cubeFacesDirections[f][2] 
+				};
 
-			Quad quad = {};
-			Vector3 positionOffset = {
-				(float)x + (float)chunk->position.x * Chunk::SIZE_X,
-				(float)y,
-				(float)z + (float)chunk->position.z * Chunk::SIZE_Z };
+				bool exposed = (blockType != AIR) && 
+					chunkManager.isTransparent(chunk, { neighbourChunks[0], neighbourChunks[1], neighbourChunks[2] });
 
-			quad.v0 = cubeVerticesPositions[faceIndices[f][0]] + positionOffset;
-			quad.v1 = cubeVerticesPositions[faceIndices[f][1]] + positionOffset;
-			quad.v2 = cubeVerticesPositions[faceIndices[f][2]] + positionOffset;
-			quad.v3 = cubeVerticesPositions[faceIndices[f][3]] + positionOffset;
-			quad.normal = cubeFacesDirections[f];
-			quad.color = chunkManager.blockProperties[blockType].faceColors[f];
-			chunkQuads.push_back(quad);
+				mask[u * sizeV + v] = exposed ? (int)blockType : -1;
+				used[u * sizeV + v] = false;
+			}
+
+			for (int u = 0; u < sizeU; u++)
+			for (int v = 0; v < sizeV; v++)
+			{
+				int index = u * sizeV + v;
+				if (used[index] || mask[index] < 0)
+					continue;
+
+				int blockType = mask[index];
+
+				int spanV = 1;
+				while (
+					v + spanV < sizeV &&
+					!used[u * sizeV + v + spanV] &&
+					mask[u * sizeV + v + spanV] == blockType
+					)
+					spanV++;
+
+				int spanU = 1;
+				while (u + spanU < sizeU)
+				{
+					bool ok = true;
+					for (int k = 0; k < spanV && ok; k++)
+					{
+						int neighbourIndex = (u + spanU) * sizeV + v + k;
+						if (used[neighbourIndex] || mask[neighbourIndex] != blockType)
+							ok = false;
+					}
+					if (!ok)
+						break;
+					spanU++;
+				}
+
+				for (int du = 0; du < spanU; du++)
+				for (int dv = 0; dv < spanV; dv++)
+					used[(u + du) * sizeV + v + dv] = true;
+
+				float faceNormal = (float)(n + (cubeFacesDirections[f][normalAxis] > 0 ? 1 : 0));
+
+				Quad quad = {};
+				quad.v0 = makeVertex((float)u, (float)v, normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
+				quad.v1 = makeVertex((float)(u + spanU), (float)v, normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
+				quad.v2 = makeVertex((float)(u + spanU), (float)(v + spanV), normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
+				quad.v3 = makeVertex((float)u, (float)(v + spanV), normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
+				quad.normal = {
+					cubeFacesDirections[f][0],
+					cubeFacesDirections[f][1],
+					cubeFacesDirections[f][2],
+				};
+				quad.color = chunkManager.blockProperties[blockType].faceColors[f];
+				chunkQuads.push_back(quad);
+			}
 		}
 	}
+
 	return chunkQuads;
+}
+
+Vector3 VoxelRenderer::makeVertex(float fu, float fv, int normalAxis, float faceNormal, int uAxis, int vAxis, const float offsetX, const float offsetZ)
+{
+	float coords[3] = { 0.0f, 0.0f, 0.0f };
+	coords[normalAxis] = faceNormal;
+	coords[uAxis] = fu;
+	coords[vAxis] = fv;
+	return { coords[0] + offsetX, coords[1], coords[2] + offsetZ };
 }

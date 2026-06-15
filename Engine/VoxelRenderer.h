@@ -34,31 +34,13 @@ private:
 
 	std::vector<Quad> buildMeshData(Chunk* chunk, ChunkManager& chunkManager);
 
+	Vector3 makeVertex(float fu, float fv, int normalAxis, float faceNormal, int uAxis, int vAxis, const float offsetX, const float offsetZ);
+
 	const float FRUSTUM_PADDING = 0.087f;
 
-
-	const Vector3 cubeVerticesPositions[8] = {
-		{0,0,0},
-		{1,0,0},
-		{1,1,0},
-		{0,1,0},
-		{0,0,1},
-		{1,0,1},
-		{1,1,1},
-		{0,1,1}
-	};
-
-	const int faceIndices[6][4] =
-	{
-		{0,1,2,3},
-		{5,4,7,6},
-
-		{4,0,3,7},
-		{1,5,6,2},
-
-		{3,2,6,7},
-		{4,5,1,0}
-	};
+	const int sizes[3] = { Chunk::SIZE_X , Chunk::SIZE_Y, Chunk::SIZE_Z };
+	
+	static const int MAX_SLICE = Chunk::SIZE_X * Chunk::SIZE_Y;
 
 	const Vector3Int cubeFacesDirections[6] = {
 		{0,0,-1},

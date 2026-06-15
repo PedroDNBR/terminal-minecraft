@@ -60,6 +60,44 @@ void Renderer::drawPixelDepth(int x, int y, float inverseZ, WORD color)
 	colorBuffer[index] = color;
 }
 
+void Renderer::drawQuadWireframe(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD color)
+{
+	const int quadVertexCount = 4;
+	float verticesX[quadVertexCount] = { v0.viewPosition.x, v1.viewPosition.x, v2.viewPosition.x, v3.viewPosition.x };
+	float verticesY[quadVertexCount] = { v0.viewPosition.y, v1.viewPosition.y, v2.viewPosition.y, v3.viewPosition.y };
+	float verticesZ[quadVertexCount] = { v0.inverseZ, v1.inverseZ, v2.inverseZ, v3.inverseZ };
+
+	for (int i = 0; i < quadVertexCount; i++)
+	{
+		int j = (i + 1) % quadVertexCount;
+
+		float x0 = verticesX[i], y0 = verticesY[i], z0 = verticesZ[i];
+		float x1 = verticesX[j], y1 = verticesY[j], z1 = verticesZ[j];
+
+		float dx = x1 - x0;
+		float dy = y1 - y0;
+		float steps = (fabsf(dx) > fabsf(dy)) ? fabsf(dx) : fabsf(dy);
+		if (steps < 1.0f) steps = 1.0f;
+
+		float stepX = dx / steps;
+		float stepY = dy / steps;
+		float stepZ = (z1 - z0) / steps;
+
+		float x = x0, y = y0, z = z0;
+		int n = (int)steps;
+		for (int s = 0; s <= n; s++)
+		{
+			int px = (int)(x + 0.5f);
+			int py = (int)(y + 0.5f);
+			if (px >= 0 && px < logicalWidth && py >= 0 && py < logicalHeight)
+				drawPixelDepth(px, py, z, color);
+			x += stepX;
+			y += stepY;
+			z += stepZ;
+		}
+	}
+}
+
 void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD color)
 {
 	const int quadVertexCount = 4;
