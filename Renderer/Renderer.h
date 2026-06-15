@@ -17,6 +17,7 @@ public:
 	void drawPixelDepth(int x, int y, float inverseZ, WORD color);
 	void drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD color);
 	void drawQuadWireframe(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD color);
+	void drawPolygonWireframe(Vertex* verts, int count, WORD color);
 	void queueText(int x, int y, const std::wstring& text, WORD color);
 	void present();
 

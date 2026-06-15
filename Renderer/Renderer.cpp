@@ -60,19 +60,14 @@ void Renderer::drawPixelDepth(int x, int y, float inverseZ, WORD color)
 	colorBuffer[index] = color;
 }
 
-void Renderer::drawQuadWireframe(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD color)
+void Renderer::drawPolygonWireframe(Vertex* verts, int count, WORD color)
 {
-	const int quadVertexCount = 4;
-	float verticesX[quadVertexCount] = { v0.viewPosition.x, v1.viewPosition.x, v2.viewPosition.x, v3.viewPosition.x };
-	float verticesY[quadVertexCount] = { v0.viewPosition.y, v1.viewPosition.y, v2.viewPosition.y, v3.viewPosition.y };
-	float verticesZ[quadVertexCount] = { v0.inverseZ, v1.inverseZ, v2.inverseZ, v3.inverseZ };
-
-	for (int i = 0; i < quadVertexCount; i++)
+	for (int i = 0; i < count; i++)
 	{
-		int j = (i + 1) % quadVertexCount;
+		int j = (i + 1) % count;
 
-		float x0 = verticesX[i], y0 = verticesY[i], z0 = verticesZ[i];
-		float x1 = verticesX[j], y1 = verticesY[j], z1 = verticesZ[j];
+		float x0 = verts[i].viewPosition.x, y0 = verts[i].viewPosition.y, z0 = verts[i].inverseZ;
+		float x1 = verts[j].viewPosition.x, y1 = verts[j].viewPosition.y, z1 = verts[j].inverseZ;
 
 		float dx = x1 - x0;
 		float dy = y1 - y0;
@@ -96,6 +91,12 @@ void Renderer::drawQuadWireframe(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WOR
 			z += stepZ;
 		}
 	}
+}
+
+void Renderer::drawQuadWireframe(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD color)
+{
+	Vertex verts[4] = { v0, v1, v2, v3 };
+	drawPolygonWireframe(verts, 4, color);
 }
 
 void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD color)
