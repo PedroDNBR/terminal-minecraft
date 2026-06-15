@@ -142,15 +142,29 @@ void ChunkManager::commitLoadedChunks()
 	while (loadedChunksQueue.pop(chunk))
 	{
 		ChunkCoord coord = chunk->position;
+
+		std::vector<ChunkCoord> neighborsToRemesh;
 		{
 			std::unique_lock<std::shared_mutex> wlock(chunksMutex);
 			chunks[coord] = std::move(chunk);
+
+			const int dx[] = { 1, -1, 0, 0 };
+			const int dz[] = { 0, 0, 1, -1 };
+			for (int i = 0; i < 4; i++)
+			{
+				ChunkCoord nc = { coord.x + dx[i], coord.z + dz[i] };
+				if (chunks.count(nc))
+					neighborsToRemesh.push_back(nc);
+			}
 		}
+
 		{
 			std::lock_guard<std::mutex> lock(meshingQueueMutex);
 			meshingQueue.push(coord);
+			for (const ChunkCoord& nc : neighborsToRemesh)
+				meshingQueue.push(nc);
 		}
-		meshingQueueCV.notify_one();
+		meshingQueueCV.notify_all();
 	}
 }
 
