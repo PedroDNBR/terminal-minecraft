@@ -1,8 +1,10 @@
 #pragma once
 #include <vector>
 #include <memory>
-#include "Chunk/Chunk.h"
 #include <unordered_map>
+#include "NoiseConstants.h"
+#include "NoiseCache.h"
+#include "Chunk/Chunk.h"
 #include "../Renderer/Quad.h"
 
 class TerrainGenerator
@@ -10,8 +12,40 @@ class TerrainGenerator
 public:
 	std::unique_ptr<Chunk> generateChunkData(ChunkCoord chunkPosition);
 
+	NoiseCache buildNoiseCache(ChunkCoord chunkPosition, uint32_t seed);
+
+	float bilinearLerp(float grid[NoiseConstants::NOISE_GRID][NoiseConstants::NOISE_GRID],
+		int intX, int intZ, float fractionX, float fractionZ);
+
 	int seed = 1;
-	int baseTerrainHeight = 28;
+	static constexpr int BASE_TERRAIN_HEIGHT = 26;
+
+	static constexpr float PEAK_SHAPE_SCALE = 2.0f;
+	static constexpr float PEAK_SHAPE_OFFSET = 1.0f;
+	static constexpr float PEAK_SHAPE_MAX = 1.0f;
+
+	static constexpr float EROSION_START = 0.3f;
+	static constexpr float EROSION_END = 0.7f;
+	static constexpr float EROSION_MASK_MAX = 1.0f;
+
+	static constexpr float VALLEY_MIDPOINT = 0.5f;
+	static constexpr float VALLEY_STRENGTH = 18.0f;
+	static constexpr float NEGATIVE_VALLEY_MULTIPLIER = 1.4f;
+
+	static constexpr float CONTINENT_ELEVATION_MAX = 10.f;
+	static constexpr float EROSION_PEAKS_MAX = 6.f;
+
+	static constexpr float VALLEY_SCALE = 1.4f;
+
+	static constexpr float OFFSET_ROUND = 2.f;
+
+	static constexpr float RIVER_WIDTH = .12f;
+	static constexpr float RIVER_MAX_STEEP = .4f;
+	
+	static constexpr int SEA_LEVEL = 20;
+
+	static constexpr float CAVE_THRESHOUD = .2f;
+
 
 };
 

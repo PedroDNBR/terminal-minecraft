@@ -109,5 +109,11 @@
     <ClInclude Include="Engine\MPSCQueue.h">
       <Filter>Engine</Filter>
     </ClInclude>
+    <ClInclude Include="World\NoiseCache.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\NoiseConstants.h">
+      <Filter>World</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

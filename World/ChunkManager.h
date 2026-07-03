@@ -22,6 +22,7 @@ public:
 	ChunkManager();
 
 	int renderDistance = 4;
+	int loadDistance = 6;
 	int unloadDistance = 16;
 	BlockProperties blockProperties[BlockType::MAX] = {};
 
@@ -54,6 +55,11 @@ public:
 
 	void setBlockProperties();
 	bool isTransparent(Chunk* chunk, Vector3Int position);
+	bool isTransparent(Chunk* chunk ,Chunk* negativeXNeighbour, Chunk* positiveXNeighbour, Chunk* negativeZNeighbour, Chunk* positiveZNeighbour, Vector3Int position);
+	bool isWater(Chunk* chunk, Vector3Int position);
+	bool isWater(Chunk* chunk, Chunk* negativeXNeighbour, Chunk* positiveXNeighbour, Chunk* negativeZNeighbour, Chunk* positiveZNeighbour, Vector3Int position);
+	bool isAir(Chunk* chunk, Vector3Int position);
+	bool isAir(Chunk* chunk, Chunk* negativeXNeighbour, Chunk* positiveXNeighbour, Chunk* negativeZNeighbour, Chunk* positiveZNeighbour, Vector3Int position);
 
 	void handleChunkLoad(const Camera& camera);
 	void handleChunkUnload(const Camera& camera);

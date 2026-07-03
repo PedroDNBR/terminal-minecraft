@@ -33,6 +33,7 @@ private:
 	std::mutex readyMeshesMutex;
 
 	std::vector<Quad> buildMeshData(Chunk* chunk, ChunkManager& chunkManager);
+	std::vector<Quad> buildMeshData(Chunk* chunk, Chunk* negativeXNeighbour, Chunk* positiveXNeighbour, Chunk* negativeZNeighbour, Chunk* positiveZNeighbour, ChunkManager& chunkManager);
 
 	Vector3 makeVertex(float fu, float fv, int normalAxis, float faceNormal, int uAxis, int vAxis, const float offsetX, const float offsetZ);
 
