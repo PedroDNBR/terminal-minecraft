@@ -4,7 +4,7 @@ Expanding the concept of the [2D Console Graphics Engine](https://github.com/Ped
 
 ### Screenshots (Latest Update):
 
-<img  width="100%" src="https://i.imgur.com/PWCt7qK.png" />
+<img  width="100%" src="https://i.imgur.com/tCX8vio.png" />
 
 ### Progress:
 
@@ -49,9 +49,13 @@ Expanding the concept of the [2D Console Graphics Engine](https://github.com/Ped
       </td>
     <tr>
     </tr>
-    <td align="center">
+      <td align="center">
         <strong>Greedy Meshing and Wireframe Rendering</strong><br>
         <img width="100%" src="https://i.imgur.com/yYs1X2t.png" />
+      </td>
+      <td align="center">
+        <strong>Improved multithreading and terrain generation overhaul</strong><br>
+        <img width="100%" src="https://i.imgur.com/tCX8vio.png" />
       </td>
     <tr>
 
