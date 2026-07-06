@@ -216,6 +216,46 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		}
 	}
 
+	for (int x = 0; x < Chunk::SIZE_X; x++)
+	for (int z = 0; z < Chunk::SIZE_Z; z++)
+	{
+		if (
+			isRockyMap[x][z] ||
+			isRiverMap[x][z] ||
+			chunk->blocks[x][heightMap[x][z]][z] == SAND
+			)
+			continue;
+
+		int surfaceY = heightMap[x][z];
+
+		if (surfaceY <= SEA_LEVEL)
+			continue;
+
+		float gridX = (float)x / NoiseConstants::NOISE_STEP;
+		float gridZ = (float)z / NoiseConstants::NOISE_STEP;
+		int intX = (int)gridX;
+		int intZ = (int)gridZ;
+		float fractionX = gridX - intX;
+		float fractionZ = gridZ - intZ;
+
+		float forestDensity = bilinearLerp(noiseCache.forest, intX, intZ, fractionX, fractionZ);
+
+		if (forestDensity < MIN_FOREST_DENSITY)
+			continue;
+
+		unsigned hash = (unsigned)(
+			(unsigned)(worldOffsetX + x) * 73856093u ^
+			(unsigned)(worldOffsetZ + z) * 19349663u ^
+			seed
+		);
+
+		if ((hash % FOREST_TREE_PLACEMENT_OFFSET) != 0)
+			continue;
+
+		placeTree(chunk.get(), x, surfaceY, z);
+
+	}
+
 	return chunk;
 }
 
@@ -239,6 +279,52 @@ NoiseCache TerrainGenerator::buildNoiseCache(ChunkCoord chunkPosition, uint32_t 
 	}
 
 	return noiseCache;
+}
+
+void TerrainGenerator::placeTree(Chunk* chunk, int x, int baseY, int z)
+{
+	unsigned hash = (unsigned)(x * 1619 + z * 31337 + baseY * 997);
+
+	int trunkHeight = TREE_TRUNK_BASE_HEIGHT + (int)(hash % 3);
+
+	for (int y = 1; y <= trunkHeight; y++)
+	{
+		int trunkY = baseY + y;
+		if (trunkY >= Chunk::SIZE_Y)
+			break;
+
+		chunk->blocks[x][trunkY][z] = LOG;
+	}
+
+	int topY = baseY + trunkHeight;
+
+	for (int deltaY = -1; deltaY <= TREE_TRUNK_LEAVES_Y_RADIUS; deltaY++)
+	for (int deltaX = -TREE_TRUNK_LEAVES_XZ_RADIUS; deltaX <= TREE_TRUNK_LEAVES_XZ_RADIUS; deltaX++)
+	for (int deltaZ = -TREE_TRUNK_LEAVES_XZ_RADIUS; deltaZ <= TREE_TRUNK_LEAVES_XZ_RADIUS; deltaZ++)
+	{
+		float elipseX = (float)deltaX / TREE_TRUNK_LEAVES_XZ_RADIUS;
+		float elipseY = (float)deltaY / TREE_TRUNK_LEAVES_Y_RADIUS;
+		float elipseZ = (float)deltaZ / TREE_TRUNK_LEAVES_XZ_RADIUS;
+
+		if (elipseX * elipseX + elipseY * elipseY + elipseZ * elipseZ > 1.0f)
+			continue;	
+
+		int targetX = x + deltaX;
+		int targetY = topY + deltaY;
+		int targetZ = z + deltaZ;
+
+		if (targetX < 0 || targetX >= Chunk::SIZE_X)
+			continue;
+		if (targetY < 0 || targetY >= Chunk::SIZE_Y)
+			continue;
+		if (targetZ < 0 || targetZ >= Chunk::SIZE_Z)
+			continue;
+
+		if (chunk->blocks[targetX][targetY][targetZ] == LOG)
+			continue;
+
+		chunk->blocks[targetX][targetY][targetZ] = LEAVES;
+	}
 }
 
 float TerrainGenerator::bilinearLerp(float grid[NoiseConstants::NOISE_GRID][NoiseConstants::NOISE_GRID],

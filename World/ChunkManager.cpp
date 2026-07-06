@@ -31,7 +31,7 @@ void ChunkManager::setBlockProperties()
 	blockProperties[GRASS] = { 6, 6, 5, 5, 10, 5 };
 	blockProperties[DIRT] = { 6, 6, 5, 5, 6, 5 };
 	blockProperties[STONE] = { 7, 7, 8, 8, 7, 8 };
-	blockProperties[WOOD] = { 6, 6, 5, 5, 6, 5 };
+	blockProperties[LOG] = { 6, 6, 5, 5, 6, 5 };
 	blockProperties[LEAVES] = { 2, 2, 1, 1, 2, 1 };
 	blockProperties[WATER] = { 9, 9, 1, 1, 9, 1 };
 	blockProperties[SAND] = { 14, 14, 6, 6, 14, 6 };

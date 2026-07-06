@@ -14,6 +14,8 @@ public:
 
 	NoiseCache buildNoiseCache(ChunkCoord chunkPosition, uint32_t seed);
 
+	void placeTree(Chunk* chunk, int x, int baseY, int z);
+
 	float bilinearLerp(float grid[NoiseConstants::NOISE_GRID][NoiseConstants::NOISE_GRID],
 		int intX, int intZ, float fractionX, float fractionZ);
 
@@ -45,6 +47,12 @@ public:
 	static constexpr int SEA_LEVEL = 20;
 
 	static constexpr float CAVE_THRESHOUD = .2f;
+
+	static constexpr float MIN_FOREST_DENSITY = 0.25f;
+	static constexpr int FOREST_TREE_PLACEMENT_OFFSET = 150;
+	static constexpr int TREE_TRUNK_BASE_HEIGHT = 4;
+	static constexpr int TREE_TRUNK_LEAVES_XZ_RADIUS = 2;
+	static constexpr int TREE_TRUNK_LEAVES_Y_RADIUS = 2;
 
 
 };
