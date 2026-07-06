@@ -16,6 +16,14 @@ public:
 
 	void placeTree(Chunk* chunk, int x, int baseY, int z);
 
+	void carveWormCave(
+		Chunk* chunk,
+		int heightMap[Chunk::SIZE_X][Chunk::SIZE_Z],
+		float startX, float startY, float startZ,
+		float directionX, float directionY, float directionZ,
+		float radius, int length
+	);
+
 	float bilinearLerp(float grid[NoiseConstants::NOISE_GRID][NoiseConstants::NOISE_GRID],
 		int intX, int intZ, float fractionX, float fractionZ);
 
@@ -47,6 +55,11 @@ public:
 	static constexpr int SEA_LEVEL = 20;
 
 	static constexpr float CAVE_THRESHOUD = .2f;
+
+	static constexpr int WORM_CAVE_FREQUENCY = 3;
+
+	static constexpr float WORM_CAVE_RADIUS = 3.2f;
+	static constexpr int WORM_CAVE_LENGHT = 30;
 
 	static constexpr float MIN_FOREST_DENSITY = 0.25f;
 	static constexpr int FOREST_TREE_PLACEMENT_OFFSET = 150;

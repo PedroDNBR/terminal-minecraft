@@ -58,13 +58,15 @@ Expanding the concept of the [2D Console Graphics Engine](https://github.com/Ped
         <img width="100%" src="https://i.imgur.com/tCX8vio.png" />
       </td>
     <tr>
-</tr>
+    </tr>
       <td align="center">
         <strong>Tree Generation</strong><br>
         <img width="100%" src="https://i.imgur.com/VTrYyGo.png" />
       </td>
+       <td align="center">
+        <strong>Worm caves carving</strong><br>
+        <img width="100%" src="https://i.imgur.com/IMvC2rt.png" />
+      </td>
     <tr>
-    
 </table>
-
 <br/>

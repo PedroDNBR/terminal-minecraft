@@ -167,53 +167,6 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		int caveTop = height - 2;
 		if (caveTop <= 1) continue;
 
-		for (int y = 1; y < caveTop; y++)
-		{
-			if (chunk->blocks[x][y][z] == WATER) continue;
-
-			float caveGridX = (float)x / NoiseConstants::CAVE_STEP;
-			float caveGridY = (float)y / (NoiseConstants::CAVE_STEP * .6f);
-			float caveGridZ = (float)z / NoiseConstants::CAVE_STEP;
-
-			int intGridX = (int)caveGridX;
-			int intGridY = (int)caveGridY;
-			int intGridZ = (int)caveGridZ;
-
-			float fractionGridX = caveGridX - intGridX;
-			float fractionGridY = caveGridY - intGridY;
-			float fractionGridZ = caveGridZ - intGridZ;
-
-			if (intGridX >= NoiseConstants::CAVE_GRID_X - 1)
-				intGridX = NoiseConstants::CAVE_GRID_X - 2;
-
-			if (intGridY >= NoiseConstants::CAVE_GRID_Y - 1)
-				intGridY = NoiseConstants::CAVE_GRID_Y - 2;
-
-			if (intGridZ >= NoiseConstants::CAVE_GRID_Z - 1)
-				intGridZ = NoiseConstants::CAVE_GRID_Z - 2;
-
-			float c000 = caveGrid[intGridX][intGridY][intGridZ];
-			float c100 = caveGrid[intGridX + 1][intGridY][intGridZ];
-			float c010 = caveGrid[intGridX][intGridY + 1][intGridZ];
-			float c110 = caveGrid[intGridX + 1][intGridY + 1][intGridZ];
-			float c001 = caveGrid[intGridX][intGridY][intGridZ + 1];
-			float c101 = caveGrid[intGridX + 1][intGridY][intGridZ + 1];
-			float c011 = caveGrid[intGridX][intGridY + 1][intGridZ + 1];
-			float c111 = caveGrid[intGridX + 1][intGridY + 1][intGridZ + 1];
-
-			float cx0 = c000 * (1 - fractionGridX) + c100 * fractionGridX;
-			float cx1 = c010 * (1 - fractionGridX) + c110 * fractionGridX;
-			float cx2 = c001 * (1 - fractionGridX) + c101 * fractionGridX;
-			float cx3 = c011 * (1 - fractionGridX) + c111 * fractionGridX;
-
-			float cz0 = cx0 * (1 - fractionGridZ) + cx2 * fractionGridZ;
-			float cz1 = cx1 * (1 - fractionGridZ) + cx3 * fractionGridZ;
-
-			float caveValue = cz0 * (1 - fractionGridY) + cz1 * fractionGridY;
-		
-			if(caveValue < CAVE_THRESHOUD)
-				chunk->blocks[x][y][z] = AIR;
-		}
 	}
 
 	for (int x = 0; x < Chunk::SIZE_X; x++)
@@ -254,6 +207,46 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 
 		placeTree(chunk.get(), x, surfaceY, z);
 
+	}
+
+	unsigned wormHash = (unsigned)(worldOffsetX) * 73856093u ^ 
+		(unsigned)(worldOffsetZ) * 19349663u ^ 
+		((unsigned)seed * 2654435761u);
+
+	wormHash = wormHash >> 15;
+	wormHash *= 2246822519u;
+	wormHash ^= wormHash >> 13;
+
+	int wormCount = (wormHash % WORM_CAVE_FREQUENCY);
+
+	for (int w = 0; w < wormCount; w++)
+	{
+		unsigned h = (wormHash + w * 0x9E3779B9u) * 2654435761u;
+		h ^= h >> 16;
+
+		unsigned bitsStartX = h & 0xF;
+		unsigned bitsStartZ = (h >> 4) & 0xF;
+		unsigned bitsY = (h >> 8) & 0x3F;
+		unsigned bitsAngle = (h >> 14) & 0x3FF; 
+		unsigned bitsDirectionY = (h >> 24) & 0x7F;
+
+		int sx = (int)bitsStartX;
+		int sz = (int)bitsStartZ;
+
+		int columnHeight = heightMap[sx][sz];
+		if (columnHeight < 8) continue;
+
+		float startX = (float)sx;
+		float startZ = (float)sz;
+		float startY = (float)(4 + bitsY % (columnHeight - 6));
+
+		float angle = (float)bitsAngle / 1024.0f * 6.2831853f;
+
+		float directionX = cosf(angle);
+		float directionZ = sinf(angle);
+		float directionY = -0.4f + (float)bitsDirectionY / 128.0f * 0.8f;
+
+		carveWormCave(chunk.get(), heightMap, startX, startY, startZ, directionX, directionY, directionZ, WORM_CAVE_RADIUS, WORM_CAVE_LENGHT);
 	}
 
 	return chunk;
@@ -324,6 +317,60 @@ void TerrainGenerator::placeTree(Chunk* chunk, int x, int baseY, int z)
 			continue;
 
 		chunk->blocks[targetX][targetY][targetZ] = LEAVES;
+	}
+}
+
+void TerrainGenerator::carveWormCave(Chunk* chunk, int heightMap[Chunk::SIZE_X][Chunk::SIZE_Z], float startX, float startY, float startZ, float directionX, float directionY, float directionZ, float radius, int length)
+{
+	for (int step = 0; step < length; step++)
+	{
+		float t = (float)step / length;
+		directionX += smoothNoise(startX * 0.1f + t, startZ * 0.1f, seed + 1) * 0.4f - 0.2f;
+		directionY += smoothNoise(startX * 0.1f, startZ * 0.1f + t, seed + 2) * 0.2f - 0.1f;
+		directionZ += smoothNoise(startZ * 0.1f + t, startY * 0.1f, seed + 3) * 0.4f - 0.2f;
+
+		float newWormLenght = sqrtf(directionX * directionX + directionY * directionY + directionZ * directionZ);
+
+		if (newWormLenght < 1e-5f)
+			newWormLenght = 1.0f;
+
+		directionX /= newWormLenght;
+		directionY /= newWormLenght;
+		directionZ /= newWormLenght;
+
+		startX += directionX;
+		startY += directionY;
+		startZ += directionZ;
+
+		int caveX = (int)startX;
+		int caveY = (int)startY;
+		int caveZ = (int)startZ;
+		int r = (int)radius;
+
+		for (int deltaX = -r; deltaX <= r; deltaX++)
+		for (int deltaY = -r; deltaY <= r; deltaY++)
+		for (int deltaZ = -r; deltaZ <= r; deltaZ++)
+		{
+			if (deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > r * r)
+				continue;
+
+			int bx = caveX + deltaX;
+			int by = caveY + deltaY;
+			int bz = caveZ + deltaZ;
+
+			if (bx < 0 || bx >= Chunk::SIZE_X)
+				continue;
+			if (bz < 0 || bz >= Chunk::SIZE_Z)
+				continue;
+			if (by < 1)
+				continue;
+			if (by >= heightMap[bx][bz] - 2)
+				continue;
+			if (chunk->blocks[bx][by][bz] == WATER)
+				continue;
+
+			chunk->blocks[bx][by][bz] = AIR;
+		}
 	}
 }
 
