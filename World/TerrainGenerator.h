@@ -15,6 +15,7 @@ public:
 	NoiseCache buildNoiseCache(ChunkCoord chunkPosition, uint32_t seed);
 
 	void placeTree(Chunk* chunk, int x, int baseY, int z);
+	void placeCactus(Chunk* chunk, int x, int baseY, int z);
 
 	void carveWormCave(
 		Chunk* chunk,
@@ -52,20 +53,23 @@ public:
 	static constexpr float RIVER_WIDTH = .12f;
 	static constexpr float RIVER_MAX_STEEP = .4f;
 	
-	static constexpr int SEA_LEVEL = 20;
+	static constexpr int SEA_LEVEL = 24;
 
 	static constexpr float CAVE_THRESHOUD = .2f;
 
 	static constexpr int WORM_CAVE_FREQUENCY = 3;
 
 	static constexpr float WORM_CAVE_RADIUS = 3.2f;
-	static constexpr int WORM_CAVE_LENGHT = 30;
+	static constexpr int WORM_CAVE_LENGTH = 30;
 
 	static constexpr float MIN_FOREST_DENSITY = 0.25f;
 	static constexpr int FOREST_TREE_PLACEMENT_OFFSET = 150;
 	static constexpr int TREE_TRUNK_BASE_HEIGHT = 4;
 	static constexpr int TREE_TRUNK_LEAVES_XZ_RADIUS = 2;
 	static constexpr int TREE_TRUNK_LEAVES_Y_RADIUS = 2;
+
+	static constexpr int CACTUS_TRUNK_BASE_HEIGHT = 3;
+
 
 
 };

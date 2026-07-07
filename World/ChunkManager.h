@@ -69,7 +69,6 @@ public:
 private:
 	TerrainGenerator terrainGenerator;
 
-
 	int lastCameraChunkX = 9999999999999;
 	int lastCameraChunkZ = 9999999999999;
 };

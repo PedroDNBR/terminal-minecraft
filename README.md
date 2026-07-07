@@ -4,7 +4,7 @@ Expanding the concept of the [2D Console Graphics Engine](https://github.com/Ped
 
 ### Screenshots (Latest Update):
 
-<img  width="100%" src="https://i.imgur.com/VTrYyGo.png" />
+<img  width="100%" src="https://i.imgur.com/Kg2gliT.png" />
 
 ### Progress:
 
@@ -68,5 +68,13 @@ Expanding the concept of the [2D Console Graphics Engine](https://github.com/Ped
         <img width="100%" src="https://i.imgur.com/IMvC2rt.png" />
       </td>
     <tr>
+    </tr>
+      <td align="center">
+        <strong>Biome definition based on temperature and humidity</strong><br>
+        <img width="100%" src="https://i.imgur.com/Kg2gliT.png" />
+      </td>
+    <tr>
+
+    
 </table>
 <br/>

@@ -9,6 +9,7 @@ enum BlockType
 	LEAVES,
 	WATER,
 	SAND,
+	CACTUS,
 	BED_ROCK,
 	MAX
 };

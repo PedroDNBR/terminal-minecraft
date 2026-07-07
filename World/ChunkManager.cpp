@@ -35,6 +35,7 @@ void ChunkManager::setBlockProperties()
 	blockProperties[LEAVES] = { 2, 2, 1, 1, 2, 1 };
 	blockProperties[WATER] = { 9, 9, 1, 1, 9, 1 };
 	blockProperties[SAND] = { 14, 14, 6, 6, 14, 6 };
+	blockProperties[CACTUS] = { 2, 2, 1, 1, 2, 1 };
 }
 
 bool ChunkManager::isTransparent(Chunk* chunk, Vector3Int position)
