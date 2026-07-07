@@ -217,8 +217,7 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 
 		float forestDensity = bilinearLerp(noiseCache.forest, intX, intZ, fractionX, fractionZ);
 
-		if (forestDensity < MIN_FOREST_DENSITY)
-			continue;
+		bool isDesert = (temperatureMap[x][z] > 0.55f && humidityMap[x][z] < 0.4f);
 
 		unsigned hash = (unsigned)(
 			(unsigned)(worldOffsetX + x) * 73856093u ^
@@ -226,19 +225,32 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 			seed
 		);
 
-		if ((hash % FOREST_TREE_PLACEMENT_OFFSET) != 0)
-			continue;
-
-		if (chunk->blocks[x][heightMap[x][z]][z] == SAND || (
-			temperatureMap[x][z] > 0.55f &&
-			humidityMap[x][z] < .25f))
+		if (isDesert)
 		{
-			if ((hash % (int)(FOREST_TREE_PLACEMENT_OFFSET * .75f)) != 0)
-				placeCactus(chunk.get(), x, surfaceY, z);
+			if (chunk->blocks[x][surfaceY][z] != SAND)
+				continue;
+
+			if (forestDensity < .70f)
+				continue;
+
+			if ((hash % 350) != 0)
+				continue;
+
+			placeCactus(chunk.get(), x, surfaceY, z);
 		}
 		else
-			placeTree(chunk.get(), x, surfaceY, z);
+		{
+			if (chunk->blocks[x][surfaceY][z] != GRASS)
+				continue;
 
+			if (forestDensity < MIN_FOREST_DENSITY)
+				continue;
+
+			if ((hash % FOREST_TREE_PLACEMENT_OFFSET) != 0)
+				continue;
+
+			placeTree(chunk.get(), x, surfaceY, z);
+		}
 	}
 
 	unsigned wormHash = (unsigned)(worldOffsetX) * 73856093u ^ 
