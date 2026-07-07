@@ -46,7 +46,7 @@ public:
 	static constexpr float CONTINENT_ELEVATION_MAX = 10.f;
 	static constexpr float EROSION_PEAKS_MAX = 6.f;
 
-	static constexpr float VALLEY_SCALE = 1.4f;
+	static constexpr float VALLEY_SCALE = 1.8f;
 
 	static constexpr float OFFSET_ROUND = 2.f;
 

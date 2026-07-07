@@ -3,6 +3,9 @@
 
 struct NoiseCache
 {
+	float warpX[NoiseConstants::NOISE_GRID][NoiseConstants::NOISE_GRID];
+	float warpZ[NoiseConstants::NOISE_GRID][NoiseConstants::NOISE_GRID];
+
 	float temperature[NoiseConstants::NOISE_GRID][NoiseConstants::NOISE_GRID];
 	float humidity[NoiseConstants::NOISE_GRID][NoiseConstants::NOISE_GRID];
 

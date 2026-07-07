@@ -33,7 +33,10 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		temperatureMap[x][z] = bilinearLerp(noiseCache.temperature, intX, intZ, fractionX, fractionZ);
 		humidityMap[x][z] = bilinearLerp(noiseCache.humidity, intX, intZ, fractionX, fractionZ);
 
-		float continent = bilinearLerp(noiseCache.base, intX, intZ, fractionX, fractionZ);
+		float warpedX = bilinearLerp(noiseCache.warpX, intX, intZ, fractionX, fractionZ);
+		float warpedZ = bilinearLerp(noiseCache.warpZ, intX, intZ, fractionX, fractionZ);
+
+		float continent = bilinearLerp(noiseCache.base, (intX + warpedX * 30) * 0.01f, (intZ + warpedZ * 30) * 0.01f, fractionX, fractionZ);
 		float erosion = bilinearLerp(noiseCache.hills, intX, intZ, fractionX, fractionZ);
 		float peaks = bilinearLerp(noiseCache.peaks, intX, intZ, fractionX, fractionZ);
 		peaks = PEAK_SHAPE_MAX - fabsf(peaks * PEAK_SHAPE_SCALE - PEAK_SHAPE_OFFSET);
@@ -50,7 +53,7 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 			continent * CONTINENT_ELEVATION_MAX +
 			peaks * EROSION_PEAKS_MAX * erosionMask +
 			(EROSION_MASK_MAX - erosionMask) * PEAK_SHAPE_SCALE +
-			valleyEffect * VALLEY_SCALE;
+			valleyEffect * (VALLEY_SCALE * (temperatureMap[x][z] - 1));
 
 		heightFinal += OFFSET_ROUND;
 
@@ -290,6 +293,9 @@ NoiseCache TerrainGenerator::buildNoiseCache(ChunkCoord chunkPosition, uint32_t 
 	{
 		float worldX = (float)(chunkPosition.x * Chunk::SIZE_X + gx * NoiseConstants::NOISE_GRID);
 		float worldZ = (float)(chunkPosition.z * Chunk::SIZE_Z + gz * NoiseConstants::NOISE_GRID);
+
+		noiseCache.warpX[gx][gz] = smoothNoise(worldX * NoiseConstants::WARP_FREQUENCY, worldZ * NoiseConstants::WARP_FREQUENCY, seed + 11111u);
+		noiseCache.warpZ[gx][gz] = smoothNoise(worldX * NoiseConstants::WARP_FREQUENCY, worldZ * NoiseConstants::WARP_FREQUENCY, seed + 22222u);
 
 		noiseCache.temperature[gx][gz] = smoothNoise(worldX * NoiseConstants::BIOME_FREQUENCY, worldZ * NoiseConstants::BIOME_FREQUENCY, seed + 99991u);
 		noiseCache.humidity[gx][gz] = smoothNoise(worldX * NoiseConstants::BIOME_FREQUENCY, worldZ * NoiseConstants::BIOME_FREQUENCY, seed + 88881u);

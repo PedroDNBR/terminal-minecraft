@@ -6,6 +6,8 @@ namespace NoiseConstants
 	inline constexpr int NOISE_STEP = 4;
 	inline constexpr int NOISE_GRID = Chunk::SIZE_X / NOISE_STEP + 1;
 
+	inline constexpr float WARP_FREQUENCY = 0.008f;
+
 	inline constexpr float BIOME_FREQUENCY = 0.005f;
 
 	inline constexpr float BASE_FREQUENCY = 0.02f;
