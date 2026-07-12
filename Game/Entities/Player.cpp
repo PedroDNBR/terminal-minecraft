@@ -28,5 +28,6 @@ void Player::tick(float deltaTime)
 
 
 	if (GetKeyState(VK_SPACE) & 0x8000) setPosition(getPosition() + Vector3{ 0, movementSpeed, 0 } *deltaTime);
-	if (GetKeyState(VK_LCONTROL) & 0x8000) setPosition(getPosition() + Vector3{ 0, -movementSpeed, 0 } *deltaTime);
+	if (GetKeyState('Q') & 0x8000) setPosition(getPosition() + Vector3{ 0, -movementSpeed, 0 } *deltaTime);
+	//if (GetKeyState(VK_LCONTROL) & 0x8000) setPosition(getPosition() + Vector3{ 0, -movementSpeed, 0 } *deltaTime);
 }

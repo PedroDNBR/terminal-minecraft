@@ -1,4 +1,5 @@
 #include "Renderer.h"
+#include "../Engine/Profiler.h"
 
 Renderer::Renderer(bool startFullscreen)
 {
@@ -253,27 +254,36 @@ bool Renderer::hasWindowResized()
 
 void Renderer::present()
 {
-	for (int x = 0; x < realWidth; x++)
-	for (int y = 0; y < realHeight; y++)
-	{
-		int topIndex = (y * 2) * logicalWidth + x;
-		int bottomIndex = (y * 2 + 1) * logicalWidth + x;
+	packMs = 0;
+	writeMs = 0;
 
-		CHAR_INFO& cell = screenBuffer[y * realWidth + x];
-		cell.Char.UnicodeChar = L'\u2584';
-		cell.Attributes = (colorBuffer[topIndex] << 4) | colorBuffer[bottomIndex];
+	{
+		ScopedTimer t(packMs);
+		for (int y = 0; y < realHeight; y++)
+		for (int x = 0; x < realWidth; x++)
+		{
+			int topIndex = (y * 2) * logicalWidth + x;
+			int bottomIndex = (y * 2 + 1) * logicalWidth + x;
+
+			CHAR_INFO& cell = screenBuffer[y * realWidth + x];
+			cell.Char.UnicodeChar = L'\u2584';
+			cell.Attributes = (colorBuffer[topIndex] << 4) | colorBuffer[bottomIndex];
+		}
 	}
 
-	for (const auto& cmd : textToPrint)
 	{
-		drawText(cmd.x, cmd.y, cmd.text, cmd.color);
-	}
+		ScopedTimer t(writeMs);
+		for (const auto& cmd : textToPrint)
+		{
+			drawText(cmd.x, cmd.y, cmd.text, cmd.color);
+		}
 
-	WriteConsoleOutput(
-		handle,
-		screenBuffer.data(),
-		{ (SHORT)realWidth, (SHORT)realHeight },
-		{ 0, 0 },
-		&rect
-	);
+		WriteConsoleOutput(
+			handle,
+			screenBuffer.data(),
+			{ (SHORT)realWidth, (SHORT)realHeight },
+			{ 0, 0 },
+			&rect
+		);
+	}
 }

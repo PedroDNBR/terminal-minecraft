@@ -29,6 +29,9 @@ public:
 	int getRealWidth()     const { return realWidth; }
 	int getRealHeight()    const { return realHeight; }
 
+	double packMs = 0;
+	double writeMs = 0;
+
 private:
 	HANDLE handle;
 	SMALL_RECT rect;

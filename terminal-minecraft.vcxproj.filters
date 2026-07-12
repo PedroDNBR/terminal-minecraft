@@ -90,8 +90,7 @@
     <ClInclude Include="Renderer\RawTextPrint.h">
       <Filter>Renderer</Filter>
     </ClInclude>
-    <ClInclude Include="World\Chunk\LoadedChunk.h" />
-    <ClInclude Include="Engine\ReadyMesh.h">
+    <ClInclude Include="World\Chunk\LoadedChunk.h">
       <Filter>World\Chunk</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Frustum.h">
@@ -100,7 +99,7 @@
     <ClInclude Include="Engine\Plane.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="ReadyMesh.h">
+    <ClInclude Include="Engine\ReadyMesh.h">
       <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="World\Chunk\ChunkLoadRequest.h">
@@ -114,6 +113,15 @@
     </ClInclude>
     <ClInclude Include="World\NoiseConstants.h">
       <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Profiler.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\VisibleMesh.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer\Colors.h">
+      <Filter>Renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

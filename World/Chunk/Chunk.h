@@ -5,10 +5,10 @@
 struct Chunk
 {
 	static constexpr int SIZE_X = 16;
-	static constexpr int SIZE_Y = 64;
 	static constexpr int SIZE_Z = 16;
+	static constexpr int SIZE_Y = 64;
 
-	BlockType blocks[SIZE_X][SIZE_Y][SIZE_Z];
+	BlockType blocks[SIZE_X][SIZE_Z][SIZE_Y];
 
 	ChunkCoord position;
 };

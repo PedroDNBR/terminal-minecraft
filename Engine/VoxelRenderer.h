@@ -10,6 +10,7 @@
 #include "../World/Chunk/Chunk.h"
 #include "../World/ChunkManager.h"
 #include "Frustum.h"
+#include "VisibleMesh.h"
 
 class VoxelRenderer
 {
@@ -32,14 +33,26 @@ private:
 	std::queue<ReadyMesh> readyMeshes;
 	std::mutex readyMeshesMutex;
 
+	std::vector<VisibleMesh> meshDrawList;
+	bool meshListDirty = true;
+
 	std::vector<Quad> buildMeshData(Chunk* chunk, ChunkManager& chunkManager);
 	std::vector<Quad> buildMeshData(Chunk* chunk, Chunk* negativeXNeighbour, Chunk* positiveXNeighbour, Chunk* negativeZNeighbour, Chunk* positiveZNeighbour, ChunkManager& chunkManager);
 
 	Vector3 makeVertex(float fu, float fv, int normalAxis, float faceNormal, int uAxis, int vAxis, const float offsetX, const float offsetZ);
+	Vector3 reconstructCenter(const Quad& quad, float offsetX, float offsetZ, float normalAxis, float uAxis, float vAxis);
+
+	void reconstructQuad(const Quad& quad, float offsetX, float offsetZ, float normalAxis, float uAxis, float vAxis, Vector3& v0, Vector3& v1, Vector3& v2, Vector3& v3);
 
 	const float FRUSTUM_PADDING = 0.087f;
 
 	const int sizes[3] = { Chunk::SIZE_X , Chunk::SIZE_Y, Chunk::SIZE_Z };
+
+	const int normalAxisTable[6][3] = {
+		{2,0,1}, {2,0,1},
+		{0,1,2}, {0,1,2},
+		{1,0,2}, {1,0,2},
+	};
 	
 	static const int MAX_SLICE = Chunk::SIZE_X * Chunk::SIZE_Y;
 

@@ -43,7 +43,7 @@ bool ChunkManager::isTransparent(Chunk* chunk, Vector3Int position)
 	if (position.y < 0 || position.y >= Chunk::SIZE_Y) return true;
 
 	if (position.x >= 0 && position.x < Chunk::SIZE_X && position.z >= 0 && position.z < Chunk::SIZE_Z)
-		return chunk->blocks[position.x][position.y][position.z] == AIR || chunk->blocks[position.x][position.y][position.z] == WATER;
+		return chunk->blocks[position.x][position.z][position.y] == AIR || chunk->blocks[position.x][position.z][position.y] == WATER;
 
 	Chunk* neighborChunk = nullptr;
 
@@ -51,25 +51,25 @@ bool ChunkManager::isTransparent(Chunk* chunk, Vector3Int position)
 	{
 		neighborChunk = getChunk({ chunk->position.x - 1, chunk->position.z });
 		if (neighborChunk != nullptr)
-			return neighborChunk->blocks[position.x + Chunk::SIZE_X][position.y][position.z] == AIR || neighborChunk->blocks[position.x + Chunk::SIZE_X][position.y][position.z] == WATER;
+			return neighborChunk->blocks[position.x + Chunk::SIZE_X][position.z][position.y] == AIR || neighborChunk->blocks[position.x + Chunk::SIZE_X][position.z][position.y] == WATER;
 	}
 	if (position.x >= Chunk::SIZE_X)
 	{
 		neighborChunk = getChunk({ chunk->position.x + 1, chunk->position.z });
 		if (neighborChunk != nullptr)
-			return neighborChunk->blocks[position.x - Chunk::SIZE_X][position.y][position.z] == AIR || neighborChunk->blocks[position.x - Chunk::SIZE_X][position.y][position.z] == WATER;
+			return neighborChunk->blocks[position.x - Chunk::SIZE_X][position.z][position.y] == AIR || neighborChunk->blocks[position.x - Chunk::SIZE_X][position.z][position.y] == WATER;
 	}
 	if (position.z < 0)
 	{
 		neighborChunk = getChunk({ chunk->position.x, chunk->position.z - 1 });
 		if (neighborChunk != nullptr)
-			return neighborChunk->blocks[position.x][position.y][position.z + Chunk::SIZE_Z] == AIR || neighborChunk->blocks[position.x][position.y][position.z + Chunk::SIZE_Z] == WATER;
+			return neighborChunk->blocks[position.x][position.z + Chunk::SIZE_Z][position.y] == AIR || neighborChunk->blocks[position.x][position.z + Chunk::SIZE_Z][position.y] == WATER;
 	}
 	if (position.z >= Chunk::SIZE_Z)
 	{
 		neighborChunk = getChunk({ chunk->position.x, chunk->position.z + 1 });
 		if (neighborChunk != nullptr)
-			return neighborChunk->blocks[position.x][position.y][position.z - Chunk::SIZE_Z] == AIR || neighborChunk->blocks[position.x][position.y][position.z - Chunk::SIZE_Z] == WATER;
+			return neighborChunk->blocks[position.x][position.z - Chunk::SIZE_Z][position.y] == AIR || neighborChunk->blocks[position.x][position.z - Chunk::SIZE_Z][position.y] == WATER;
 	}
 
 	return true;
@@ -80,19 +80,19 @@ bool ChunkManager::isTransparent(Chunk* chunk, Chunk* negativeXNeighbour, Chunk*
 	if (position.y < 0 || position.y >= Chunk::SIZE_Y) return true;
 
 	if (position.x >= 0 && position.x < Chunk::SIZE_X && position.z >= 0 && position.z < Chunk::SIZE_Z)
-		return chunk->blocks[position.x][position.y][position.z] == AIR || chunk->blocks[position.x][position.y][position.z] == WATER;
+		return chunk->blocks[position.x][position.z][position.y] == AIR || chunk->blocks[position.x][position.z][position.y] == WATER;
 
 	if (position.x < 0)
-		return negativeXNeighbour == nullptr || negativeXNeighbour->blocks[position.x + Chunk::SIZE_X][position.y][position.z] == AIR || negativeXNeighbour->blocks[position.x + Chunk::SIZE_X][position.y][position.z] == WATER;
-	
+		return negativeXNeighbour == nullptr || negativeXNeighbour->blocks[position.x + Chunk::SIZE_X][position.z][position.y] == AIR || negativeXNeighbour->blocks[position.x + Chunk::SIZE_X][position.z][position.y] == WATER;
+
 	if (position.x >= Chunk::SIZE_X)
-		return positiveXNeighbour == nullptr || positiveXNeighbour->blocks[position.x - Chunk::SIZE_X][position.y][position.z] == AIR || positiveXNeighbour->blocks[position.x - Chunk::SIZE_X][position.y][position.z] == WATER;
-	
+		return positiveXNeighbour == nullptr || positiveXNeighbour->blocks[position.x - Chunk::SIZE_X][position.z][position.y] == AIR || positiveXNeighbour->blocks[position.x - Chunk::SIZE_X][position.z][position.y] == WATER;
+
 	if (position.z < 0)
-		return negativeZNeighbour == nullptr || negativeZNeighbour->blocks[position.x][position.y][position.z + Chunk::SIZE_Z] == AIR || negativeZNeighbour->blocks[position.x][position.y][position.z + Chunk::SIZE_Z] == WATER;
-	
+		return negativeZNeighbour == nullptr || negativeZNeighbour->blocks[position.x][position.z + Chunk::SIZE_Z][position.y] == AIR || negativeZNeighbour->blocks[position.x][position.z + Chunk::SIZE_Z][position.y] == WATER;
+
 	if (position.z >= Chunk::SIZE_Z)
-		return positiveZNeighbour == nullptr || positiveZNeighbour->blocks[position.x][position.y][position.z - Chunk::SIZE_Z] == AIR || positiveZNeighbour->blocks[position.x][position.y][position.z - Chunk::SIZE_Z] == WATER;
+		return positiveZNeighbour == nullptr || positiveZNeighbour->blocks[position.x][position.z - Chunk::SIZE_Z][position.y] == AIR || positiveZNeighbour->blocks[position.x][position.z - Chunk::SIZE_Z][position.y] == WATER;
 
 	return true;
 }
@@ -102,7 +102,7 @@ bool ChunkManager::isWater(Chunk* chunk, Vector3Int position)
 	if (position.y < 0 || position.y >= Chunk::SIZE_Y) return true;
 
 	if (position.x >= 0 && position.x < Chunk::SIZE_X && position.z >= 0 && position.z < Chunk::SIZE_Z)
-		return chunk->blocks[position.x][position.y][position.z] == WATER;
+		return chunk->blocks[position.x][position.z][position.y] == WATER;
 
 	Chunk* neighborChunk = nullptr;
 
@@ -110,25 +110,25 @@ bool ChunkManager::isWater(Chunk* chunk, Vector3Int position)
 	{
 		neighborChunk = getChunk({ chunk->position.x - 1, chunk->position.z });
 		if (neighborChunk != nullptr)
-			return neighborChunk->blocks[position.x + Chunk::SIZE_X][position.y][position.z] == WATER;
+			return neighborChunk->blocks[position.x + Chunk::SIZE_X][position.z][position.y] == WATER;
 	}
 	if (position.x >= Chunk::SIZE_X)
 	{
 		neighborChunk = getChunk({ chunk->position.x + 1, chunk->position.z });
 		if (neighborChunk != nullptr)
-			return neighborChunk->blocks[position.x - Chunk::SIZE_X][position.y][position.z] == WATER;
+			return neighborChunk->blocks[position.x - Chunk::SIZE_X][position.z][position.y] == WATER;
 	}
 	if (position.z < 0)
 	{
 		neighborChunk = getChunk({ chunk->position.x, chunk->position.z - 1 });
 		if (neighborChunk != nullptr)
-			return neighborChunk->blocks[position.x][position.y][position.z + Chunk::SIZE_Z] == WATER;
+			return neighborChunk->blocks[position.x][position.z + Chunk::SIZE_Z][position.y] == WATER;
 	}
 	if (position.z >= Chunk::SIZE_Z)
 	{
 		neighborChunk = getChunk({ chunk->position.x, chunk->position.z + 1 });
 		if (neighborChunk != nullptr)
-			return neighborChunk->blocks[position.x][position.y][position.z - Chunk::SIZE_Z] == WATER;
+			return neighborChunk->blocks[position.x][position.z - Chunk::SIZE_Z][position.y] == WATER;
 	}
 
 	return true;
@@ -139,19 +139,19 @@ bool ChunkManager::isWater(Chunk* chunk, Chunk* negativeXNeighbour, Chunk* posit
 	if (position.y < 0 || position.y >= Chunk::SIZE_Y) return true;
 
 	if (position.x >= 0 && position.x < Chunk::SIZE_X && position.z >= 0 && position.z < Chunk::SIZE_Z)
-		return chunk->blocks[position.x][position.y][position.z] == WATER;
+		return chunk->blocks[position.x][position.z][position.y] == WATER;
 
 	if (position.x < 0)
-			return negativeXNeighbour == nullptr || negativeXNeighbour->blocks[position.x + Chunk::SIZE_X][position.y][position.z] == WATER;
+		return negativeXNeighbour == nullptr || negativeXNeighbour->blocks[position.x + Chunk::SIZE_X][position.z][position.y] == WATER;
 
 	if (position.x >= Chunk::SIZE_X)
-			return positiveXNeighbour == nullptr || positiveXNeighbour->blocks[position.x - Chunk::SIZE_X][position.y][position.z] == WATER;
+		return positiveXNeighbour == nullptr || positiveXNeighbour->blocks[position.x - Chunk::SIZE_X][position.z][position.y] == WATER;
 
 	if (position.z < 0)
-			return negativeZNeighbour == nullptr || negativeZNeighbour->blocks[position.x][position.y][position.z + Chunk::SIZE_Z] == WATER;
+		return negativeZNeighbour == nullptr || negativeZNeighbour->blocks[position.x][position.z + Chunk::SIZE_Z][position.y] == WATER;
 
 	if (position.z >= Chunk::SIZE_Z)
-			return positiveZNeighbour == nullptr || positiveZNeighbour->blocks[position.x][position.y][position.z - Chunk::SIZE_Z] == WATER;
+		return positiveZNeighbour == nullptr || positiveZNeighbour->blocks[position.x][position.z - Chunk::SIZE_Z][position.y] == WATER;
 
 	return true;
 }
@@ -161,7 +161,7 @@ bool ChunkManager::isAir(Chunk* chunk, Vector3Int position)
 	if (position.y < 0 || position.y >= Chunk::SIZE_Y) return true;
 
 	if (position.x >= 0 && position.x < Chunk::SIZE_X && position.z >= 0 && position.z < Chunk::SIZE_Z)
-		return chunk->blocks[position.x][position.y][position.z] == AIR;
+		return chunk->blocks[position.x][position.z][position.y] == AIR;
 
 	Chunk* neighborChunk = nullptr;
 
@@ -169,25 +169,25 @@ bool ChunkManager::isAir(Chunk* chunk, Vector3Int position)
 	{
 		neighborChunk = getChunk({ chunk->position.x - 1, chunk->position.z });
 		if (neighborChunk != nullptr)
-			return neighborChunk->blocks[position.x + Chunk::SIZE_X][position.y][position.z] == AIR;
+			return neighborChunk->blocks[position.x + Chunk::SIZE_X][position.z][position.y] == AIR;
 	}
 	if (position.x >= Chunk::SIZE_X)
 	{
 		neighborChunk = getChunk({ chunk->position.x + 1, chunk->position.z });
 		if (neighborChunk != nullptr)
-			return neighborChunk->blocks[position.x - Chunk::SIZE_X][position.y][position.z] == AIR;
+			return neighborChunk->blocks[position.x - Chunk::SIZE_X][position.z][position.y] == AIR;
 	}
 	if (position.z < 0)
 	{
 		neighborChunk = getChunk({ chunk->position.x, chunk->position.z - 1 });
 		if (neighborChunk != nullptr)
-			return neighborChunk->blocks[position.x][position.y][position.z + Chunk::SIZE_Z] == AIR;
+			return neighborChunk->blocks[position.x][position.z + Chunk::SIZE_Z][position.y] == AIR;
 	}
 	if (position.z >= Chunk::SIZE_Z)
 	{
 		neighborChunk = getChunk({ chunk->position.x, chunk->position.z + 1 });
 		if (neighborChunk != nullptr)
-			return neighborChunk->blocks[position.x][position.y][position.z - Chunk::SIZE_Z] == AIR;
+			return neighborChunk->blocks[position.x][position.z - Chunk::SIZE_Z][position.y] == AIR;
 	}
 
 	return true;
@@ -198,20 +198,20 @@ bool ChunkManager::isAir(Chunk* chunk, Chunk* negativeXNeighbour, Chunk* positiv
 	if (position.y < 0 || position.y >= Chunk::SIZE_Y) return true;
 
 	if (position.x >= 0 && position.x < Chunk::SIZE_X && position.z >= 0 && position.z < Chunk::SIZE_Z)
-		return chunk->blocks[position.x][position.y][position.z] == AIR;
+		return chunk->blocks[position.x][position.z][position.y] == AIR;
 
 
 	if (position.x < 0)
-		return negativeXNeighbour == nullptr || negativeXNeighbour->blocks[position.x + Chunk::SIZE_X][position.y][position.z] == AIR;
+		return negativeXNeighbour == nullptr || negativeXNeighbour->blocks[position.x + Chunk::SIZE_X][position.z][position.y] == AIR;
 
 	if (position.x >= Chunk::SIZE_X)
-		return positiveXNeighbour == nullptr || positiveXNeighbour->blocks[position.x - Chunk::SIZE_X][position.y][position.z] == AIR;
+		return positiveXNeighbour == nullptr || positiveXNeighbour->blocks[position.x - Chunk::SIZE_X][position.z][position.y] == AIR;
 
 	if (position.z < 0)
-		return negativeZNeighbour == nullptr || negativeZNeighbour->blocks[position.x][position.y][position.z + Chunk::SIZE_Z] == AIR;
+		return negativeZNeighbour == nullptr || negativeZNeighbour->blocks[position.x][position.z + Chunk::SIZE_Z][position.y] == AIR;
 
 	if (position.z >= Chunk::SIZE_Z)
-		return positiveZNeighbour == nullptr || positiveZNeighbour->blocks[position.x][position.y][position.z - Chunk::SIZE_Z] == AIR;
+		return positiveZNeighbour == nullptr || positiveZNeighbour->blocks[position.x][position.z - Chunk::SIZE_Z][position.y] == AIR;
 
 	return true;
 }

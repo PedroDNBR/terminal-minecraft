@@ -114,11 +114,11 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		}
 	}
 
-	float caveGrid[NoiseConstants::CAVE_GRID_X][NoiseConstants::CAVE_GRID_Y][NoiseConstants::CAVE_GRID_Z];
+	float caveGrid[NoiseConstants::CAVE_GRID_X][NoiseConstants::CAVE_GRID_Z][NoiseConstants::CAVE_GRID_Y];
 
 	for (int x = 0; x < NoiseConstants::CAVE_GRID_X; x++)
-	for (int y = 0; y < NoiseConstants::CAVE_GRID_Y; y++)
 	for (int z = 0; z < NoiseConstants::CAVE_GRID_Z; z++)
+	for (int y = 0; y < NoiseConstants::CAVE_GRID_Y; y++)
 	{
 		int worldX = worldOffsetX + x * NoiseConstants::CAVE_STEP;
 		int worldY = y * NoiseConstants::CAVE_STEP;
@@ -126,80 +126,80 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 
 		float n1 = valueNoise3D(worldX, worldY, worldZ, int(seed * .5f));
 		float n2 = valueNoise3D(worldX + 47, worldY + 31, worldZ + 83, seed * 2);
-		caveGrid[x][y][z] = fabsf(n1 - 0.5f) + fabsf(n2 - 0.5f);
+		caveGrid[x][z][y] = fabsf(n1 - 0.5f) + fabsf(n2 - 0.5f);
 	}
 
 	for (int x = 0; x < Chunk::SIZE_X; x++)
-	for (int z = 0; z < Chunk::SIZE_Z; z++)
-	{
-		int height = heightMap[x][z];
-		bool isRocky = isRockyMap[x][z];
-		bool isRiver = isRiverMap[x][z];
-		float temperature = temperatureMap[x][z];
-		float humidity = humidityMap[x][z];
-
-		for (int y = 0; y <= height; y++)
+		for (int z = 0; z < Chunk::SIZE_Z; z++)
 		{
-			BlockType blockType;
-			if (y == height)
+			int height = heightMap[x][z];
+			bool isRocky = isRockyMap[x][z];
+			bool isRiver = isRiverMap[x][z];
+			float temperature = temperatureMap[x][z];
+			float humidity = humidityMap[x][z];
+
+			for (int y = 0; y <= height; y++)
 			{
-				if(temperature > 0.55f && humidity < 0.4f)
-					blockType = SAND;
-				else if (temperature < 0.3f && humidity < 0.4f)
+				BlockType blockType;
+				if (y == height)
+				{
+					if (temperature > 0.55f && humidity < 0.4f)
+						blockType = SAND;
+					else if (temperature < 0.3f && humidity < 0.4f)
+						blockType = STONE;
+					else if (humidity > 0.6f && !isRocky)
+						blockType = GRASS;
+					else
+						blockType = GRASS;
+				}
+				else if (y < height && y > height - 4)
+					if (temperature > 0.55f && humidity < 0.4f)
+						blockType = SAND;
+					else
+						blockType = DIRT;
+				else if (y == 0)
+					blockType = BED_ROCK;
+				else
 					blockType = STONE;
-				else if (humidity > 0.6f && !isRocky)
-					blockType = GRASS;
-				else
-					blockType = GRASS;
+
+				chunk->blocks[x][z][y] = blockType;
 			}
-			else if (y < height && y > height - 4)
-				if (temperature > 0.55f && humidity < 0.4f)
-					blockType = SAND;
-				else
-					blockType = DIRT;
-			else if (y == 0)
-				blockType = BED_ROCK;
-			else
-				blockType = STONE;
 
-			chunk->blocks[x][y][z] = blockType;
+			if (height < SEA_LEVEL)
+			{
+				for (int y = height + 1; y <= SEA_LEVEL; y++)
+					chunk->blocks[x][z][y] = WATER;
+
+				chunk->blocks[x][z][height] = SAND;
+				if (height > 0)
+					chunk->blocks[x][z][height - 1] = SAND;
+			}
+
+			if (
+				height >= SEA_LEVEL && height <= SEA_LEVEL + 1 &&
+				chunk->blocks[x][z][height] == GRASS
+				)
+				chunk->blocks[x][z][height] = SAND;
+
+			if (isRiver)
+			{
+				int riverLevel = riverLevelMap[x][z];
+				for (int y = height + 1; y <= riverLevel; y++)
+					chunk->blocks[x][z][y] = WATER;
+			}
+
+			int caveTop = height - 2;
+			if (caveTop <= 1) continue;
+
 		}
-
-		if (height < SEA_LEVEL)
-		{
-			for (int y = height + 1; y <= SEA_LEVEL; y++)
-				chunk->blocks[x][y][z] = WATER;
-
-			chunk->blocks[x][height][z] = SAND;
-			if (height > 0)
-				chunk->blocks[x][height - 1][z] = SAND;
-		}
-
-		if (
-			height >= SEA_LEVEL && height <= SEA_LEVEL + 1 &&
-			chunk->blocks[x][height][z] == GRASS
-		)
-			chunk->blocks[x][height][z] = SAND;
-
-		if (isRiver)
-		{
-			int riverLevel = riverLevelMap[x][z];
-			for (int y = height + 1; y <= riverLevel; y++)
-				chunk->blocks[x][y][z] = WATER;
-		}
-
-		int caveTop = height - 2;
-		if (caveTop <= 1) continue;
-
-	}
 
 	for (int x = 0; x < Chunk::SIZE_X; x++)
-	for (int z = 0; z < Chunk::SIZE_Z; z++)
-	{
-		if (
-			isRockyMap[x][z] ||
-			isRiverMap[x][z] ||
-			chunk->blocks[x][heightMap[x][z]][z] == STONE
+		for (int z = 0; z < Chunk::SIZE_Z; z++)
+		{
+			if (
+				isRockyMap[x][z] ||
+				isRiverMap[x][z] ||
+				chunk->blocks[x][z][heightMap[x][z]] == STONE
 		)
 			continue;
 
@@ -227,7 +227,7 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 
 		if (isDesert)
 		{
-			if (chunk->blocks[x][surfaceY][z] != SAND)
+			if (chunk->blocks[x][z][surfaceY] != SAND)
 				continue;
 
 			if (forestDensity < .70f)
@@ -240,7 +240,7 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		}
 		else
 		{
-			if (chunk->blocks[x][surfaceY][z] != GRASS)
+			if (chunk->blocks[x][z][surfaceY] != GRASS)
 				continue;
 
 			if (forestDensity < MIN_FOREST_DENSITY)
@@ -336,7 +336,7 @@ void TerrainGenerator::placeTree(Chunk* chunk, int x, int baseY, int z)
 		if (trunkY >= Chunk::SIZE_Y)
 			break;
 
-		chunk->blocks[x][trunkY][z] = LOG;
+		chunk->blocks[x][z][trunkY] = LOG;
 	}
 
 	int topY = baseY + trunkHeight;
@@ -363,10 +363,10 @@ void TerrainGenerator::placeTree(Chunk* chunk, int x, int baseY, int z)
 		if (targetZ < 0 || targetZ >= Chunk::SIZE_Z)
 			continue;
 
-		if (chunk->blocks[targetX][targetY][targetZ] == LOG)
+		if (chunk->blocks[targetX][targetZ][targetY] == LOG)
 			continue;
 
-		chunk->blocks[targetX][targetY][targetZ] = LEAVES;
+		chunk->blocks[targetX][targetZ][targetY] = LEAVES;
 	}
 }
 
@@ -382,7 +382,7 @@ void TerrainGenerator::placeCactus(Chunk* chunk, int x, int baseY, int z)
 		if (trunkY >= Chunk::SIZE_Y)
 			break;
 
-		chunk->blocks[x][trunkY][z] = CACTUS;
+		chunk->blocks[x][z][trunkY] = CACTUS;
 	}
 }
 
@@ -432,10 +432,10 @@ void TerrainGenerator::carveWormCave(Chunk* chunk, int heightMap[Chunk::SIZE_X][
 				continue;
 			if (by >= heightMap[bx][bz] - 2)
 				continue;
-			if (chunk->blocks[bx][by][bz] == WATER)
+			if (chunk->blocks[bx][bz][by] == WATER)
 				continue;
 
-			chunk->blocks[bx][by][bz] = AIR;
+			chunk->blocks[bx][bz][by] = AIR;
 		}
 	}
 }

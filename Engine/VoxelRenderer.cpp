@@ -3,38 +3,57 @@
 
 void VoxelRenderer::render(Renderer& renderer, Camera& camera)
 {
+	if (meshListDirty)
+	{
+		meshDrawList.clear();
+		meshDrawList.reserve(chunksMeshesByPosition.size());
+		for (const auto& [coord, quads] : chunksMeshesByPosition)
+			meshDrawList.push_back({ coord, &quads });
+		meshListDirty = false;
+	}
+
 	renderer.drawPixel(2, 2, 15);
 
 	Frustum frustum = buildFrustum(camera, renderer.getAspectRatio(), camera.fovRadius);
 
-	for (const auto& chunk : chunksMeshesByPosition)
+	for (const auto& mesh : meshDrawList)
 	{
-		float minX = chunk.first.x * (float)Chunk::SIZE_X;
-		float minZ = chunk.first.z * (float)Chunk::SIZE_Z;
+		float minX = mesh.coord.x * (float)Chunk::SIZE_X;
+		float minZ = mesh.coord.z * (float)Chunk::SIZE_Z;
 		float maxX = minX + Chunk::SIZE_X;
 		float maxZ = minZ + Chunk::SIZE_Z;
 
 		if (frustum.isBoxOutside(minX, 0.f, minZ, maxX, 64.f, maxZ))
 			continue;
 
-		for (const auto& quad : chunk.second)
+		for (const auto& quad : *mesh.quads)
 		{
-			renderer.drawPixel(2, 3, 4);
-			Vector3 center = (quad.v0 + quad.v1 + quad.v2 + quad.v3) * .25f;
+			Vector3Int direction = cubeFacesDirections[quad.faceIndex];
+
+			int normalAxis = (direction.x != 0) ? 0 : (direction.y != 0) ? 1 : 2;
+
+			int uAxis = (normalAxis == 0) ? 1 : 0;
+			int vAxis = (normalAxis == 2) ? 1 : 2;
+
+			Vector3 center = reconstructCenter(quad, minX, minZ, normalAxis, uAxis, vAxis);
+
 			Vector3 toCameraView = camera.position - center;
-			float dot = quad.normal.x * toCameraView.x +
-				quad.normal.y * toCameraView.y +
-				quad.normal.z * toCameraView.z;
+
+			float dot = direction.x * (camera.position.x - center.x)
+				+ direction.y * (camera.position.y - center.y)
+				+ direction.z * (camera.position.z - center.z);
 
 			if (dot <= 0.0f)
 				continue;
 
+			Vector3 v0, v1, v2, v3;
+			reconstructQuad(quad, minX, minZ, normalAxis, uAxis, vAxis, v0, v1, v2, v3);
 
 			Vector3 pointsRelativePositions[4] = {
-				convertToCameraSpace(quad.v0, camera),
-				convertToCameraSpace(quad.v1, camera),
-				convertToCameraSpace(quad.v2, camera),
-				convertToCameraSpace(quad.v3, camera)
+				convertToCameraSpace(v0, camera),
+				convertToCameraSpace(v1, camera),
+				convertToCameraSpace(v2, camera),
+				convertToCameraSpace(v3, camera)
 			};
 
 			Vector3 clipped[6];
@@ -63,6 +82,7 @@ void VoxelRenderer::unloadMeshes(ChunkManager& chunkManager)
 		chunksMeshesByPosition.erase(coord);
 
 	chunkManager.meshUnload.clear();
+	meshListDirty = true;
 }
 
 Vector3 VoxelRenderer::convertToCameraSpace(const Vector3& position, Camera& camera)
@@ -218,6 +238,7 @@ void VoxelRenderer::commitReadyMeshes()
 		chunksMeshesByPosition[readyMesh.coord] = std::move(readyMesh.quads);
 		readyMeshes.pop();
 	}
+	meshListDirty = true;
 }
 
 std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, ChunkManager& chunkManager)
@@ -231,9 +252,10 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, ChunkManager& chunk
 	int mask[MAX_SLICE];
 	bool used[MAX_SLICE];
 
-	for (int f = 0; f < 6; f++)
+	for (uint8_t f = 0; f < 6; f++)
 	{
 		int normalAxis = (cubeFacesDirections[f][0] != 0) ? 0 : (cubeFacesDirections[f][1] != 0) ? 1 : 2;
+
 		int uAxis = (normalAxis == 0) ? 1 : 0;
 		int vAxis = (normalAxis == 2) ? 1 : 2;
 
@@ -250,8 +272,8 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, ChunkManager& chunk
 				coordinates[normalAxis] = n;
 				coordinates[uAxis] = u;
 				coordinates[vAxis] = v;
-	
-				BlockType blockType = chunk->blocks[coordinates[0]][coordinates[1]][coordinates[2]];
+
+				BlockType blockType = chunk->blocks[coordinates[0]][coordinates[2]][coordinates[1]];
 				int neighbourChunks[3] = {
 					coordinates[0] + cubeFacesDirections[f][0],
 					coordinates[1] + cubeFacesDirections[f][1],
@@ -308,19 +330,18 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, ChunkManager& chunk
 				for (int dv = 0; dv < spanV; dv++)
 					used[(u + du) * sizeV + v + dv] = true;
 
-				float faceNormal = (float)(n + (cubeFacesDirections[f][normalAxis] > 0 ? 1 : 0));
+				uint8_t faceNormal = (n + (cubeFacesDirections[f][normalAxis] > 0 ? 1 : 0));
 
 				Quad quad = {};
-				quad.v0 = makeVertex((float)u, (float)v, normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
-				quad.v1 = makeVertex((float)(u + spanU), (float)v, normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
-				quad.v2 = makeVertex((float)(u + spanU), (float)(v + spanV), normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
-				quad.v3 = makeVertex((float)u, (float)(v + spanV), normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
-				quad.normal = {
-					cubeFacesDirections[f][0],
-					cubeFacesDirections[f][1],
-					cubeFacesDirections[f][2],
-				};
+
+				quad.faceIndex = f;
+				quad.normal = faceNormal;
+				quad.uStart = u;
+				quad.vStart = v;
+				quad.uSpan = spanU;
+				quad.vSpan = spanV;
 				quad.color = chunkManager.blockProperties[blockType].faceColors[f];
+
 				chunkQuads.push_back(quad);
 			}
 		}
@@ -340,7 +361,7 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, Chunk* negativeXNei
 	int mask[MAX_SLICE];
 	bool used[MAX_SLICE];
 
-	for (int f = 0; f < 6; f++)
+	for (uint8_t f = 0; f < 6; f++)
 	{
 		int normalAxis = (cubeFacesDirections[f][0] != 0) ? 0 : (cubeFacesDirections[f][1] != 0) ? 1 : 2;
 		int uAxis = (normalAxis == 0) ? 1 : 0;
@@ -360,7 +381,7 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, Chunk* negativeXNei
 					coordinates[uAxis] = u;
 					coordinates[vAxis] = v;
 
-					BlockType blockType = chunk->blocks[coordinates[0]][coordinates[1]][coordinates[2]];
+					BlockType blockType = chunk->blocks[coordinates[0]][coordinates[2]][coordinates[1]];
 					int neighbourChunks[3] = {
 						coordinates[0] + cubeFacesDirections[f][0],
 						coordinates[1] + cubeFacesDirections[f][1],
@@ -417,19 +438,18 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, Chunk* negativeXNei
 						for (int dv = 0; dv < spanV; dv++)
 							used[(u + du) * sizeV + v + dv] = true;
 
-					float faceNormal = (float)(n + (cubeFacesDirections[f][normalAxis] > 0 ? 1 : 0));
+					uint8_t faceNormal = (n + (cubeFacesDirections[f][normalAxis] > 0 ? 1 : 0));
 
 					Quad quad = {};
-					quad.v0 = makeVertex((float)u, (float)v, normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
-					quad.v1 = makeVertex((float)(u + spanU), (float)v, normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
-					quad.v2 = makeVertex((float)(u + spanU), (float)(v + spanV), normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
-					quad.v3 = makeVertex((float)u, (float)(v + spanV), normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
-					quad.normal = {
-						cubeFacesDirections[f][0],
-						cubeFacesDirections[f][1],
-						cubeFacesDirections[f][2],
-					};
+
+					quad.faceIndex = f;
+					quad.normal = faceNormal;
+					quad.uStart = u;
+					quad.vStart = v;
+					quad.uSpan = spanU;
+					quad.vSpan = spanV;
 					quad.color = chunkManager.blockProperties[blockType].faceColors[f];
+
 					chunkQuads.push_back(quad);
 				}
 		}
@@ -445,4 +465,30 @@ Vector3 VoxelRenderer::makeVertex(float fu, float fv, int normalAxis, float face
 	coords[uAxis] = fu;
 	coords[vAxis] = fv;
 	return { coords[0] + offsetX, coords[1], coords[2] + offsetZ };
+}
+
+Vector3 VoxelRenderer::reconstructCenter(const Quad& quad, float offsetX, float offsetZ, float normalAxis, float uAxis, float vAxis)
+{
+	Vector3Int direction = cubeFacesDirections[quad.faceIndex];
+	
+	float uCenter = quad.uStart + quad.uSpan * 0.5f;
+	float vCenter = quad.vStart + quad.vSpan * 0.5f;
+
+	return makeVertex(uCenter, vCenter, normalAxis, (float)quad.normal, uAxis, vAxis, offsetX, offsetZ);
+}
+
+void VoxelRenderer::reconstructQuad(const Quad& quad, float offsetX, float offsetZ, float normalAxis, float uAxis, float vAxis, Vector3& v0, Vector3& v1, Vector3& v2, Vector3& v3)
+{
+	float faceNormal = (float)quad.normal;
+
+	float uStart = (float)quad.uStart;
+	float vStart = (float)quad.vStart;
+
+	float uStartSpan = (float)(quad.uStart + quad.uSpan);
+	float vStartSpan = (float)(quad.vStart + quad.vSpan);
+
+	v0 = makeVertex(uStart, vStart, normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
+	v1 = makeVertex(uStartSpan, vStart, normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
+	v2 = makeVertex(uStartSpan, vStartSpan, normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
+	v3 = makeVertex(uStart, vStartSpan, normalAxis, faceNormal, uAxis, vAxis, offsetX, offsetZ);
 }

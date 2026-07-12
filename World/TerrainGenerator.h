@@ -28,7 +28,7 @@ public:
 	float bilinearLerp(float grid[NoiseConstants::NOISE_GRID][NoiseConstants::NOISE_GRID],
 		int intX, int intZ, float fractionX, float fractionZ);
 
-	int seed = 1;
+	int seed = 421894;
 	static constexpr int BASE_TERRAIN_HEIGHT = 26;
 
 	static constexpr float PEAK_SHAPE_SCALE = 2.0f;
