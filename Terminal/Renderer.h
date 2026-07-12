@@ -1,7 +1,8 @@
 #pragma once
 #include <Windows.h>
 #include <vector>
-#include "Vertex.h"
+#include "../Core/Vertex.h"
+#include "Colors.h"
 #include "RawTextPrint.h"
 
 class Renderer
@@ -21,7 +22,7 @@ public:
 	void queueText(int x, int y, const std::wstring& text, WORD color);
 	void present();
 
-	WORD backgroundColor = 0;
+	WORD backgroundColor = Color::BLACK;
 
 	float getAspectRatio()  const { return aspectRatio; }
 	int getLogicalWidth()  const { return logicalWidth; }

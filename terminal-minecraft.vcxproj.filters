@@ -1,18 +1,27 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{a1b2c3d4-0001-4a1a-9c01-000000000001}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Terminal">
+      <UniqueIdentifier>{a1b2c3d4-0002-4a1a-9c01-000000000002}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Engine">
       <UniqueIdentifier>{6a18c40d-d6fb-434e-baf9-8c25947028d2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer">
-      <UniqueIdentifier>{18795823-c652-450e-9b5a-9b896aaaba7e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="World">
       <UniqueIdentifier>{044754c1-7d41-4285-9660-422a4ef94353}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World\Chunk">
+      <UniqueIdentifier>{4f34b14e-577b-4541-8783-4bb7b1173881}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World\Noise">
+      <UniqueIdentifier>{a1b2c3d4-0003-4a1a-9c01-000000000003}</UniqueIdentifier>
     </Filter>
     <Filter Include="Game">
       <UniqueIdentifier>{b7113a22-3647-4685-9e43-fbcd9c51e63a}</UniqueIdentifier>
@@ -20,22 +29,16 @@
     <Filter Include="Game\Entities">
       <UniqueIdentifier>{ef4296e1-f361-43ec-9590-87e3433a9b89}</UniqueIdentifier>
     </Filter>
-    <Filter Include="World\Chunk">
-      <UniqueIdentifier>{4f34b14e-577b-4541-8783-4bb7b1173881}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Terminal\Renderer.cpp">
+      <Filter>Terminal</Filter>
+    </ClCompile>
     <ClCompile Include="Engine\VoxelRenderer.cpp">
       <Filter>Engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Renderer\Renderer.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
-    <ClCompile Include="Game\Entities\Player.cpp">
-      <Filter>Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="World\TerrainGenerator.cpp">
       <Filter>World</Filter>
@@ -43,55 +46,37 @@
     <ClCompile Include="World\ChunkManager.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="Game\Entities\Player.cpp">
+      <Filter>Game\Entities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Core\Vector.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Vertex.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\MPSCQueue.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Profiler.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Terminal\Renderer.h">
+      <Filter>Terminal</Filter>
+    </ClInclude>
+    <ClInclude Include="Terminal\Colors.h">
+      <Filter>Terminal</Filter>
+    </ClInclude>
+    <ClInclude Include="Terminal\RawTextPrint.h">
+      <Filter>Terminal</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\VoxelRenderer.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Engine\DirectionsXZ.h">
+    <ClInclude Include="Engine\Quad.h">
       <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\Renderer.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\Vector.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\Vertex.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\Quad.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="World\Camera.h">
-      <Filter>World</Filter>
-    </ClInclude>
-    <ClInclude Include="Game\Entities\Player.h">
-      <Filter>Game\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="World\Noise.h">
-      <Filter>World</Filter>
-    </ClInclude>
-    <ClInclude Include="World\Chunk\Chunk.h">
-      <Filter>World\Chunk</Filter>
-    </ClInclude>
-    <ClInclude Include="World\Chunk\Block.h">
-      <Filter>World\Chunk</Filter>
-    </ClInclude>
-    <ClInclude Include="World\TerrainGenerator.h">
-      <Filter>World</Filter>
-    </ClInclude>
-    <ClInclude Include="World\Chunk\ChunkCoord.h">
-      <Filter>World\Chunk</Filter>
-    </ClInclude>
-    <ClInclude Include="World\ChunkManager.h">
-      <Filter>World</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer\RawTextPrint.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="World\Chunk\LoadedChunk.h">
-      <Filter>World\Chunk</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Frustum.h">
       <Filter>Engine</Filter>
@@ -99,29 +84,50 @@
     <ClInclude Include="Engine\Plane.h">
       <Filter>Engine</Filter>
     </ClInclude>
+    <ClInclude Include="Engine\DirectionsXZ.h">
+      <Filter>Engine</Filter>
+    </ClInclude>
     <ClInclude Include="Engine\ReadyMesh.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="World\Chunk\ChunkLoadRequest.h">
-      <Filter>World\Chunk</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\MPSCQueue.h">
-      <Filter>Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="World\NoiseCache.h">
-      <Filter>World</Filter>
-    </ClInclude>
-    <ClInclude Include="World\NoiseConstants.h">
-      <Filter>World</Filter>
-    </ClInclude>
-    <ClInclude Include="Engine\Profiler.h">
       <Filter>Engine</Filter>
     </ClInclude>
     <ClInclude Include="Engine\VisibleMesh.h">
       <Filter>Engine</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer\Colors.h">
-      <Filter>Renderer</Filter>
+    <ClInclude Include="World\ChunkManager.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\TerrainGenerator.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Camera.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Noise\Noise.h">
+      <Filter>World\Noise</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Noise\NoiseCache.h">
+      <Filter>World\Noise</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Noise\NoiseConstants.h">
+      <Filter>World\Noise</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Chunk\Block.h">
+      <Filter>World\Chunk</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Chunk\Chunk.h">
+      <Filter>World\Chunk</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Chunk\ChunkCoord.h">
+      <Filter>World\Chunk</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Chunk\ChunkLoadRequest.h">
+      <Filter>World\Chunk</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Chunk\LoadedChunk.h">
+      <Filter>World\Chunk</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Entities\Player.h">
+      <Filter>Game\Entities</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

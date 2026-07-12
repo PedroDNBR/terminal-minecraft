@@ -11,7 +11,7 @@ enum BlockType
 	SAND,
 	CACTUS,
 	BED_ROCK,
-	MAX
+	BLOCK_MAX
 };
 
 struct BlockProperties

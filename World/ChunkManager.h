@@ -12,8 +12,8 @@
 #include "Chunk/LoadedChunk.h"
 #include "Chunk/Chunk.h"
 #include "Chunk/ChunkLoadRequest.h"
-#include "../Renderer/Vector.h"
-#include "../Engine/MPSCQueue.h"
+#include "../Core/Vector.h"
+#include "../Core/MPSCQueue.h"
 
 
 class ChunkManager
@@ -24,7 +24,7 @@ public:
 	int renderDistance = 4;
 	int loadDistance = 6;
 	int unloadDistance = 16;
-	BlockProperties blockProperties[BlockType::MAX] = {};
+	BlockProperties blockProperties[BlockType::BLOCK_MAX] = {};
 
 	std::priority_queue<
 		ChunkLoadRequest,

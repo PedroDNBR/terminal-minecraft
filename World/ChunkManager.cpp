@@ -1,4 +1,5 @@
 #include "ChunkManager.h"
+#include "../Terminal/Colors.h"
 
 ChunkManager::ChunkManager()
 {
@@ -27,15 +28,15 @@ std::shared_ptr<Chunk> ChunkManager::getChunkSharedPtr(ChunkCoord coord)
 
 void ChunkManager::setBlockProperties()
 {
-	blockProperties[AIR] = { 0, 0, 0, 0, 0, 0 };
-	blockProperties[GRASS] = { 6, 6, 5, 5, 10, 5 };
-	blockProperties[DIRT] = { 6, 6, 5, 5, 6, 5 };
-	blockProperties[STONE] = { 7, 7, 8, 8, 7, 8 };
-	blockProperties[LOG] = { 6, 6, 5, 5, 6, 5 };
-	blockProperties[LEAVES] = { 2, 2, 1, 1, 2, 1 };
-	blockProperties[WATER] = { 9, 9, 1, 1, 9, 1 };
-	blockProperties[SAND] = { 14, 14, 6, 6, 14, 6 };
-	blockProperties[CACTUS] = { 2, 2, 1, 1, 2, 1 };
+	blockProperties[AIR] = { BLACK, BLACK, BLACK, BLACK, BLACK, BLACK };
+	blockProperties[GRASS] = { YELLOW, YELLOW, PURPLE, PURPLE, BRIGHT_GREEN, PURPLE };
+	blockProperties[DIRT] = { YELLOW, YELLOW, PURPLE, PURPLE, YELLOW, PURPLE };
+	blockProperties[STONE] = { WHITE, WHITE, GRAY, GRAY, WHITE, GRAY };
+	blockProperties[LOG] = { YELLOW, YELLOW, PURPLE, PURPLE, YELLOW, PURPLE };
+	blockProperties[LEAVES] = { GREEN, GREEN, BLUE, BLUE, GREEN, BLUE };
+	blockProperties[WATER] = { BRIGHT_BLUE, BRIGHT_BLUE, BLUE, BLUE, BRIGHT_BLUE, BLUE };
+	blockProperties[SAND] = { BRIGHT_YELLOW, BRIGHT_YELLOW, YELLOW, YELLOW, BRIGHT_YELLOW, YELLOW };
+	blockProperties[CACTUS] = { GREEN, GREEN, BLUE, BLUE, GREEN, BLUE };
 }
 
 bool ChunkManager::isTransparent(Chunk* chunk, Vector3Int position)

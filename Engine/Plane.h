@@ -1,5 +1,5 @@
 #pragma once
-#include "../Renderer/Vector.h"
+#include "../Core/Vector.h"
 struct Plane
 {
 	float a, b, c, d;

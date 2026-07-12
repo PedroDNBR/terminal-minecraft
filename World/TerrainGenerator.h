@@ -2,10 +2,10 @@
 #include <vector>
 #include <memory>
 #include <unordered_map>
-#include "NoiseConstants.h"
-#include "NoiseCache.h"
+#include "Noise/NoiseConstants.h"
+#include "Noise/NoiseCache.h"
 #include "Chunk/Chunk.h"
-#include "../Renderer/Quad.h"
+#include "../Engine/Quad.h"
 
 class TerrainGenerator
 {

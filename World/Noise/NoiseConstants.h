@@ -1,5 +1,5 @@
 #pragma once
-#include "Chunk/Chunk.h"
+#include "../Chunk/Chunk.h"
 
 namespace NoiseConstants
 {

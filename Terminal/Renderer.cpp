@@ -1,5 +1,5 @@
 #include "Renderer.h"
-#include "../Engine/Profiler.h"
+#include "../Core/Profiler.h"
 
 Renderer::Renderer(bool startFullscreen)
 {

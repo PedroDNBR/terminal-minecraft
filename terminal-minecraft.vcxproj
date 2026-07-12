@@ -131,40 +131,40 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Engine\VoxelRenderer.cpp" />
-    <ClCompile Include="Game\Entities\Player.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Renderer\Renderer.cpp" />
+    <ClCompile Include="Terminal\Renderer.cpp" />
+    <ClCompile Include="Engine\VoxelRenderer.cpp" />
     <ClCompile Include="World\ChunkManager.cpp" />
     <ClCompile Include="World\TerrainGenerator.cpp" />
+    <ClCompile Include="Game\Entities\Player.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Engine\DirectionsXZ.h" />
+    <ClInclude Include="Core\Vector.h" />
+    <ClInclude Include="Core\Vertex.h" />
+    <ClInclude Include="Core\MPSCQueue.h" />
+    <ClInclude Include="Core\Profiler.h" />
+    <ClInclude Include="Terminal\Renderer.h" />
+    <ClInclude Include="Terminal\Colors.h" />
+    <ClInclude Include="Terminal\RawTextPrint.h" />
+    <ClInclude Include="Engine\VoxelRenderer.h" />
+    <ClInclude Include="Engine\Quad.h" />
     <ClInclude Include="Engine\Frustum.h" />
-    <ClInclude Include="Engine\MPSCQueue.h" />
     <ClInclude Include="Engine\Plane.h" />
-    <ClInclude Include="Engine\Profiler.h" />
+    <ClInclude Include="Engine\DirectionsXZ.h" />
     <ClInclude Include="Engine\ReadyMesh.h" />
     <ClInclude Include="Engine\VisibleMesh.h" />
-    <ClInclude Include="Engine\VoxelRenderer.h" />
-    <ClInclude Include="Game\Entities\Player.h" />
-    <ClInclude Include="Renderer\Colors.h" />
-    <ClInclude Include="Renderer\Quad.h" />
-    <ClInclude Include="Renderer\RawTextPrint.h" />
-    <ClInclude Include="Renderer\Renderer.h" />
-    <ClInclude Include="Renderer\Vector.h" />
-    <ClInclude Include="Renderer\Vertex.h" />
-    <ClInclude Include="World\Camera.h" />
     <ClInclude Include="World\ChunkManager.h" />
+    <ClInclude Include="World\TerrainGenerator.h" />
+    <ClInclude Include="World\Camera.h" />
+    <ClInclude Include="World\Noise\Noise.h" />
+    <ClInclude Include="World\Noise\NoiseCache.h" />
+    <ClInclude Include="World\Noise\NoiseConstants.h" />
     <ClInclude Include="World\Chunk\Block.h" />
     <ClInclude Include="World\Chunk\Chunk.h" />
     <ClInclude Include="World\Chunk\ChunkCoord.h" />
     <ClInclude Include="World\Chunk\ChunkLoadRequest.h" />
     <ClInclude Include="World\Chunk\LoadedChunk.h" />
-    <ClInclude Include="World\Noise.h" />
-    <ClInclude Include="World\NoiseCache.h" />
-    <ClInclude Include="World\NoiseConstants.h" />
-    <ClInclude Include="World\TerrainGenerator.h" />
+    <ClInclude Include="Game\Entities\Player.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

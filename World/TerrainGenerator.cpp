@@ -1,5 +1,5 @@
 #include "TerrainGenerator.h"
-#include "Noise.h"
+#include "Noise/Noise.h"
 
 std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosition)
 {

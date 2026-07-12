@@ -1,15 +1,16 @@
 #include <chrono>
-#include "Renderer/Renderer.h"
+#include "Terminal/Renderer.h"
+#include "Terminal/Colors.h"
 #include "Engine/VoxelRenderer.h"
 #include "World/Camera.h"
 #include "Game/Entities/Player.h"
 #include "World/ChunkManager.h"
-#include "Engine/Profiler.h"
+#include "Core/Profiler.h"
 
 int main()
 {
 	Renderer renderer(true);
-	renderer.backgroundColor = 11;
+	renderer.backgroundColor = BRIGHT_CYAN;
 
 	ChunkManager chunkManager;
 	chunkManager.setBlockProperties();
