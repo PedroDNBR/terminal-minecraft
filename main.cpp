@@ -18,7 +18,6 @@ int main()
 	VoxelRenderer voxelRenderer;
 
 	Camera camera;
-	camera.pitch = -90 * 3.14159f / 180;
 	camera.fovRadius = camera.fov * 3.14159f / 180.f;
 	camera.focalLen = 1.0f / tanf(camera.fovRadius * .5f);
 	camera.updateCatheti();
@@ -26,6 +25,7 @@ int main()
 	Player player(camera);
 	Vector3 startingPlayerPosition = { 0,200,-2 };
 	player.setPosition(startingPlayerPosition);
+	player.setRotation(Vector3{ -90, 0, 0 });
 
 	std::vector<std::thread> workers;
 	int threads = std::thread::hardware_concurrency();

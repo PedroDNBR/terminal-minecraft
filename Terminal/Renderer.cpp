@@ -4,6 +4,9 @@
 Renderer::Renderer(bool startFullscreen)
 {
 	handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD mode = 0;
+	GetConsoleMode(handle, &mode);
+	SetConsoleMode(handle, ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
 	if (startFullscreen)
 	{

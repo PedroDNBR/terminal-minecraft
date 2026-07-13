@@ -48,11 +48,11 @@ public:
 
 	static constexpr float VALLEY_SCALE = 1.8f;
 
+	static constexpr float DESERT_FLATTEN = .8f;
+	static constexpr float BIOME_ELEVATION = 14.0f;
+
 	static constexpr float OFFSET_ROUND = 2.f;
 
-	static constexpr float RIVER_WIDTH = .12f;
-	static constexpr float RIVER_MAX_STEEP = .4f;
-	
 	static constexpr int SEA_LEVEL = 24;
 
 	static constexpr float CAVE_THRESHOUD = .2f;

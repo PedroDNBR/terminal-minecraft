@@ -12,11 +12,9 @@ namespace NoiseConstants
 
 	inline constexpr float BASE_FREQUENCY = 0.02f;
 	inline constexpr float HILLS_FREQUENCY = 0.05f;
-	inline constexpr float PEAKS_FREQUENCY = 0.025f;
-	inline constexpr float VALLEYS_FREQUENCY = 0.012f;
+	inline constexpr float PEAKS_FREQUENCY = 0.04f;
+	inline constexpr float VALLEYS_FREQUENCY = 0.03f;
 	inline constexpr float FOREST_FREQUENCY = 0.02f;
-	inline constexpr float RIVERX_FREQUENCY = 0.006f;
-	inline constexpr float RIVERZ_FREQUENCY = 0.006f;
 
 	inline constexpr int CAVE_STEP = 8;
 
