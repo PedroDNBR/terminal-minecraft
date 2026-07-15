@@ -132,8 +132,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Platform\Platform.cpp" />
     <ClCompile Include="Terminal\Renderer.cpp" />
     <ClCompile Include="Engine\VoxelRenderer.cpp" />
+    <ClCompile Include="Terminal\VTOutput.cpp" />
+    <ClCompile Include="Terminal\WinWriteConsoleOutput.cpp" />
     <ClCompile Include="World\ChunkManager.cpp" />
     <ClCompile Include="World\TerrainGenerator.cpp" />
     <ClCompile Include="Game\Entities\Player.cpp" />
@@ -143,6 +146,8 @@
     <ClInclude Include="Core\Vertex.h" />
     <ClInclude Include="Core\MPSCQueue.h" />
     <ClInclude Include="Core\Profiler.h" />
+    <ClInclude Include="Platform\Platform.h" />
+    <ClInclude Include="Terminal\ITerminalOutput.h" />
     <ClInclude Include="Terminal\Renderer.h" />
     <ClInclude Include="Terminal\Colors.h" />
     <ClInclude Include="Terminal\RawTextPrint.h" />
@@ -153,6 +158,8 @@
     <ClInclude Include="Engine\DirectionsXZ.h" />
     <ClInclude Include="Engine\ReadyMesh.h" />
     <ClInclude Include="Engine\VisibleMesh.h" />
+    <ClInclude Include="Terminal\VTOutput.h" />
+    <ClInclude Include="Terminal\WinWriteConsoleOutput.h" />
     <ClInclude Include="World\ChunkManager.h" />
     <ClInclude Include="World\TerrainGenerator.h" />
     <ClInclude Include="World\Camera.h" />

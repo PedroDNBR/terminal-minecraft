@@ -1,36 +1,20 @@
 #include "Renderer.h"
 #include "../Core/Profiler.h"
+#include "../Platform/Platform.h"
 
-Renderer::Renderer(bool startFullscreen)
-{
-	handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	DWORD mode = 0;
-	GetConsoleMode(handle, &mode);
-	SetConsoleMode(handle, ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-
-	if (startFullscreen)
-	{
-		ShowWindow(GetConsoleWindow(), SW_MAXIMIZE);
-	}
-
-	setupTerminalWindow();
-}
-
-void Renderer::setupTerminalWindow()
+void Renderer::init()
 {
 	int width = 0;
 	int height = 0;
 
-	getWindowSize(width, height);
-
+	Platform::getTerminalSize(width, height);
+	
 	realWidth = width;
 	realHeight = height;
 	logicalWidth = width;
 	logicalHeight = height * 2;
 
 	aspectRatio = (float)logicalWidth / logicalHeight * 0.55f;
-
-	rect = { 0,0, (SHORT)(realWidth - 1), (SHORT)(realHeight - 1) };
 
 	resizeBuffers();
 }
@@ -40,10 +24,9 @@ void Renderer::resizeBuffers()
 	int logicalSize = logicalWidth * logicalHeight;
 	colorBuffer.resize(logicalSize);
 	depthBuffer.resize(logicalSize, 0);
-	screenBuffer.resize(realWidth * realHeight);
 }
 
-void Renderer::drawPixel(int x, int y, WORD color)
+void Renderer::drawPixel(int x, int y, uint8_t color)
 {
 	if (x < 0 || x >= logicalWidth || y < 0 || y >= logicalHeight)
 		return;
@@ -51,7 +34,7 @@ void Renderer::drawPixel(int x, int y, WORD color)
 	colorBuffer[y * logicalWidth + x] = color;
 }
 
-void Renderer::drawPixelDepth(int x, int y, float inverseZ, WORD color)
+void Renderer::drawPixelDepth(int x, int y, float inverseZ, uint8_t color)
 {
 	if (x < 0 || x >= logicalWidth || y < 0 || y >= logicalHeight)
 		return;
@@ -64,7 +47,7 @@ void Renderer::drawPixelDepth(int x, int y, float inverseZ, WORD color)
 	colorBuffer[index] = color;
 }
 
-void Renderer::drawPolygonWireframe(Vertex* verts, int count, WORD color)
+void Renderer::drawPolygonWireframe(Vertex* verts, int count, uint8_t color)
 {
 	for (int i = 0; i < count; i++)
 	{
@@ -97,13 +80,13 @@ void Renderer::drawPolygonWireframe(Vertex* verts, int count, WORD color)
 	}
 }
 
-void Renderer::drawQuadWireframe(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD color)
+void Renderer::drawQuadWireframe(Vertex v0, Vertex v1, Vertex v2, Vertex v3, uint8_t color)
 {
 	Vertex verts[4] = { v0, v1, v2, v3 };
 	drawPolygonWireframe(verts, 4, color);
 }
 
-void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD color)
+void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, uint8_t color)
 {
 	const int quadVertexCount = 4;
 	float verticesX[quadVertexCount] = { v0.viewPosition.x, v1.viewPosition.x, v2.viewPosition.x, v3.viewPosition.x };
@@ -190,37 +173,14 @@ void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, WORD c
 	}
 }
 
-void Renderer::queueText(int x, int y, const std::wstring& text, WORD color)
+void Renderer::queueText(int x, int y, const std::string& text, uint8_t color)
 {
 	textToPrint.push_back({ x, y, text, color });
 }
 
-void Renderer::drawText(int x, int y, const std::wstring& text, WORD color)
-{
-	if(y < 0 || y >= logicalHeight)
-		return;
-
-	for (int i = 0; i < text.size(); i++)
-	{
-		int positionX = x + i;
-
-		if (positionX < 0 || positionX >= logicalWidth)
-			return;
-
-		CHAR_INFO& cell = screenBuffer[y * realWidth + positionX];
-
-		cell.Char.UnicodeChar = text[i];
-		cell.Attributes = color;
-	}
-}
-
 void Renderer::getWindowSize(int& width, int& height)
 {
-	CONSOLE_SCREEN_BUFFER_INFO consoleScreenBufferInfo;
-	GetConsoleScreenBufferInfo(handle, &consoleScreenBufferInfo);
-
-	width = consoleScreenBufferInfo.srWindow.Right - consoleScreenBufferInfo.srWindow.Left + 1;
-	height = consoleScreenBufferInfo.srWindow.Bottom - consoleScreenBufferInfo.srWindow.Top + 1;
+	Platform::getTerminalSize(width, height);
 }
 
 void Renderer::clear()
@@ -244,49 +204,9 @@ bool Renderer::hasWindowResized()
 		logicalWidth = realWidth;
 		logicalHeight = realHeight * 2;
 
-		rect = { 0,0,
-				 (SHORT)(realWidth - 1),
-				 (SHORT)(realHeight - 1) };
-
 		resizeBuffers();
 		return true;
 	}
 
 	return false;
-}
-
-void Renderer::present()
-{
-	packMs = 0;
-	writeMs = 0;
-
-	{
-		ScopedTimer t(packMs);
-		for (int y = 0; y < realHeight; y++)
-		for (int x = 0; x < realWidth; x++)
-		{
-			int topIndex = (y * 2) * logicalWidth + x;
-			int bottomIndex = (y * 2 + 1) * logicalWidth + x;
-
-			CHAR_INFO& cell = screenBuffer[y * realWidth + x];
-			cell.Char.UnicodeChar = L'\u2584';
-			cell.Attributes = (colorBuffer[topIndex] << 4) | colorBuffer[bottomIndex];
-		}
-	}
-
-	{
-		ScopedTimer t(writeMs);
-		for (const auto& cmd : textToPrint)
-		{
-			drawText(cmd.x, cmd.y, cmd.text, cmd.color);
-		}
-
-		WriteConsoleOutput(
-			handle,
-			screenBuffer.data(),
-			{ (SHORT)realWidth, (SHORT)realHeight },
-			{ 0, 0 },
-			&rect
-		);
-	}
 }

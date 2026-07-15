@@ -29,6 +29,9 @@
     <Filter Include="Game\Entities">
       <UniqueIdentifier>{ef4296e1-f361-43ec-9590-87e3433a9b89}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{3cd28733-1c3c-40a9-b4c3-d2080800b04b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -48,6 +51,15 @@
     </ClCompile>
     <ClCompile Include="Game\Entities\Player.cpp">
       <Filter>Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Terminal\VTOutput.cpp">
+      <Filter>Terminal</Filter>
+    </ClCompile>
+    <ClCompile Include="Platform\Platform.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
+    <ClCompile Include="Terminal\WinWriteConsoleOutput.cpp">
+      <Filter>Terminal</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -128,6 +140,18 @@
     </ClInclude>
     <ClInclude Include="Game\Entities\Player.h">
       <Filter>Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Platform\Platform.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Terminal\VTOutput.h">
+      <Filter>Terminal</Filter>
+    </ClInclude>
+    <ClInclude Include="Terminal\ITerminalOutput.h">
+      <Filter>Terminal</Filter>
+    </ClInclude>
+    <ClInclude Include="Terminal\WinWriteConsoleOutput.h">
+      <Filter>Terminal</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

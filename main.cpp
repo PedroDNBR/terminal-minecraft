@@ -1,16 +1,25 @@
 #include <chrono>
 #include "Terminal/Renderer.h"
+// #include "Terminal/VTOutput.h"
+#include "Terminal/WinWriteConsoleOutput.h"
 #include "Terminal/Colors.h"
 #include "Engine/VoxelRenderer.h"
 #include "World/Camera.h"
 #include "Game/Entities/Player.h"
 #include "World/ChunkManager.h"
 #include "Core/Profiler.h"
+#include "Platform/Platform.h"
 
 int main()
 {
-	Renderer renderer(true);
+	Platform::init();
+
+	Renderer renderer;
+	renderer.init();
 	renderer.backgroundColor = BRIGHT_CYAN;
+
+	//VTOutput vtOutput;
+	WinWriteConsoleOutput winOutput;
 
 	ChunkManager chunkManager;
 	chunkManager.setBlockProperties();
@@ -69,7 +78,6 @@ int main()
 	double commitReadyChunksAverage = 0;
 	double unloadChunksMeshesAverage = 0;
 
-
 	while (true)
 	{
 		auto now = std::chrono::high_resolution_clock::now();
@@ -115,7 +123,8 @@ int main()
 
 		{
 			ScopedTimer t(presentMs);
-			renderer.present();
+			//vtOutput.present(renderer.getColorBuffer(), renderer.getTextToPrint(), renderer.getRealWidth(), renderer.getRealHeight(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
+			winOutput.present(renderer.getColorBuffer(), renderer.getTextToPrint(), renderer.getRealWidth(), renderer.getRealHeight(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
 		}
 
 		renderer.clear();
@@ -128,11 +137,11 @@ int main()
 		packAccumulator += renderer.packMs;
 		writeAccumulator += renderer.writeMs;
 
-		renderer.queueText(2, 0, L"FPS: " + std::to_wstring(currentFPS), 15);
-		renderer.queueText(2, 1, L"chunks: " + std::to_wstring(chunkManager.chunks.size()), 15);
-		renderer.queueText(2, 2, L"pending: " + std::to_wstring(chunkManager.pendingCoords.size()), 15);
-		renderer.queueText(2, 3, L"meshingQueue: " + std::to_wstring(chunkManager.meshingQueue.size()), 15);
-		renderer.queueText(2, 4, L"chunksMeshesByPosition: " + std::to_wstring(voxelRenderer.chunksMeshesByPosition.size()), 15);
+		renderer.queueText(2, 0, "FPS: " + std::to_string(currentFPS), WHITE);
+		renderer.queueText(2, 1, "chunks: " + std::to_string(chunkManager.chunks.size()), WHITE);
+		renderer.queueText(2, 2, "pending: " + std::to_string(chunkManager.pendingCoords.size()), WHITE);
+		renderer.queueText(2, 3, "meshingQueue: " + std::to_string(chunkManager.meshingQueue.size()), WHITE);
+		renderer.queueText(2, 4, "chunksMeshesByPosition: " + std::to_string(voxelRenderer.chunksMeshesByPosition.size()), WHITE);
 		
 		fpsCounter++;
 		auto  fpsNow = std::chrono::high_resolution_clock::now();
@@ -160,14 +169,14 @@ int main()
 			fpsWinStart = fpsNow;
 		}
 
-		renderer.queueText(2, 6, L"loadChunksMs: " + std::to_wstring(loadChunksAverage), 15);
-		renderer.queueText(2, 7, L"commitReadyChunksMs: " + std::to_wstring(commitReadyChunksAverage), 15);
-		renderer.queueText(2, 8, L"unloadChunksMeshesMs: " + std::to_wstring(unloadChunksMeshesAverage), 15);
-		renderer.queueText(2, 9, L"renderMs: " + std::to_wstring(renderAverage), 15);
-		renderer.queueText(2, 10, L"packMs: " + std::to_wstring(packAverage), 15);
-		renderer.queueText(2, 11, L"writeMs: " + std::to_wstring(writeAverage), 15);
-		renderer.queueText(2, 12, L"presentMs: " + std::to_wstring(presentAverage), 15);
-		renderer.queueText(2, 13, L"" + std::to_wstring(renderer.getLogicalWidth()) + L"x" + std::to_wstring(renderer.getLogicalHeight()), 15);
+		renderer.queueText(2, 6, "loadChunksMs: " + std::to_string(loadChunksAverage), 15);
+		renderer.queueText(2, 7, "commitReadyChunksMs: " + std::to_string(commitReadyChunksAverage), 15);
+		renderer.queueText(2, 8, "unloadChunksMeshesMs: " + std::to_string(unloadChunksMeshesAverage), 15);
+		renderer.queueText(2, 9, "renderMs: " + std::to_string(renderAverage), 15);
+		renderer.queueText(2, 10, "packMs: " + std::to_string(packAverage), 15);
+		renderer.queueText(2, 11, "writeMs: " + std::to_string(writeAverage), 15);
+		renderer.queueText(2, 12, "presentMs: " + std::to_string(presentAverage), 15);
+		renderer.queueText(2, 13, "" + std::to_string(renderer.getLogicalWidth()) + "x" + std::to_string(renderer.getLogicalHeight()), 15);
 	
 		if (GetKeyState('P') & 0x8000)
 			break;
@@ -178,5 +187,8 @@ int main()
 	chunkManager.meshingQueueCV.notify_all();
 	for (auto& work : workers) 
 		work.join();
+
+	Platform::shutdown();
+
 	return 0;
 }
