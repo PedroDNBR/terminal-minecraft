@@ -12,8 +12,6 @@ void VoxelRenderer::render(Renderer& renderer, Camera& camera)
 		meshListDirty = false;
 	}
 
-	renderer.drawPixel(2, 2, 15);
-
 	Frustum frustum = buildFrustum(camera, renderer.getAspectRatio(), camera.fovRadius);
 
 	for (const auto& mesh : meshDrawList)
@@ -62,8 +60,6 @@ void VoxelRenderer::render(Renderer& renderer, Camera& camera)
 			if (clippedCount < 3)
 				continue;
 
-			renderer.drawPixel(2, 4, 14);
-
 			Vertex projected[6];
 			for (int i = 0; i < clippedCount; i++)
 				projected[i] = projectViewSpacePoint(clipped[i], camera, renderer.getAspectRatio(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
@@ -72,8 +68,6 @@ void VoxelRenderer::render(Renderer& renderer, Camera& camera)
 				renderer.drawFilledQuad(projected[0], projected[i], projected[i + 1], projected[i + 1], quad.color);
 		}
 	}
-
-	renderer.drawPixel(2, 5, 10);
 }
 
 void VoxelRenderer::unloadMeshes(ChunkManager& chunkManager)

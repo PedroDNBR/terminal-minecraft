@@ -1,7 +1,12 @@
+#define USE_VT_MODE 1
+
 #include <chrono>
 #include "Terminal/Renderer.h"
-// #include "Terminal/VTOutput.h"
+#if USE_VT_MODE
+#include "Terminal/VTOutput.h"
+#else
 #include "Terminal/WinWriteConsoleOutput.h"
+#endif
 #include "Terminal/Colors.h"
 #include "Engine/VoxelRenderer.h"
 #include "World/Camera.h"
@@ -18,8 +23,12 @@ int main()
 	renderer.init();
 	renderer.backgroundColor = BRIGHT_CYAN;
 
-	//VTOutput vtOutput;
+
+#if USE_VT_MODE
+	VTOutput vtOutput;
+#else
 	WinWriteConsoleOutput winOutput;
+#endif
 
 	ChunkManager chunkManager;
 	chunkManager.setBlockProperties();
@@ -123,8 +132,12 @@ int main()
 
 		{
 			ScopedTimer t(presentMs);
-			//vtOutput.present(renderer.getColorBuffer(), renderer.getTextToPrint(), renderer.getRealWidth(), renderer.getRealHeight(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
+		
+#if USE_VT_MODE
+			vtOutput.present(renderer.getColorBuffer(), renderer.getTextToPrint(), renderer.getRealWidth(), renderer.getRealHeight(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
+#else
 			winOutput.present(renderer.getColorBuffer(), renderer.getTextToPrint(), renderer.getRealWidth(), renderer.getRealHeight(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
+#endif
 		}
 
 		renderer.clear();
