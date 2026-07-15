@@ -40,9 +40,13 @@ void VTOutput::present(const std::vector<uint8_t>& colorBuffer, const std::vecto
 		outputFrame += ";";
 		outputFrame += std::to_string(textPrint.x + 1);
 		outputFrame += "H";
+
+		appendForeground(outputFrame, PALETTE[textPrint.color]);
+		appendBackground(outputFrame, PALETTE[BLACK]);
+
 		outputFrame += textPrint.text;
-		outputFrame += "\x1b[0m";
 	}
+	outputFrame += "\x1b[0m";
 
 	Platform::write(outputFrame.c_str(), outputFrame.size());
 }
