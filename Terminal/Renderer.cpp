@@ -1,3 +1,4 @@
+#include <cmath>
 #include "Renderer.h"
 #include "../Core/Profiler.h"
 #include "../Platform/Platform.h"
@@ -154,8 +155,8 @@ void Renderer::drawFilledQuad(Vertex v0, Vertex v1, Vertex v2, Vertex v3, uint8_
 		}
 		if (xLeft > xRight) continue;
 
-		int startX = (int)xLeft;
-		int endX = (int)xRight;
+		int startX = (int)ceilf(xLeft - 0.5f);
+		int endX = (int)ceilf(xRight - 0.5f) - 1;
 
 		if (startX < 0)
 			startX = 0;

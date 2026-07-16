@@ -64,8 +64,10 @@ void VoxelRenderer::render(Renderer& renderer, Camera& camera)
 			for (int i = 0; i < clippedCount; i++)
 				projected[i] = projectViewSpacePoint(clipped[i], camera, renderer.getAspectRatio(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
 
+			uint8_t shadedColorIndex = colorIndex((Color)quad.color, FACE_SHADE[quad.faceIndex]);
+
 			for (int i = 1; i + 1 < clippedCount; i++)
-				renderer.drawFilledQuad(projected[0], projected[i], projected[i + 1], projected[i + 1], quad.color);
+				renderer.drawFilledQuad(projected[0], projected[i], projected[i + 1], projected[i + 1], shadedColorIndex);
 		}
 	}
 }
@@ -275,11 +277,11 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, ChunkManager& chunk
 				};
 
 				bool exposed;
-				if (blockType == WATER) {
+				if (blockType == B_WATER) {
 					exposed = chunkManager.isAir(chunk, { neighbourChunks[0], neighbourChunks[1], neighbourChunks[2] });
 				}
 				else {
-					exposed = (blockType != AIR)
+					exposed = (blockType != B_AIR)
 						&& (chunkManager.isAir(chunk, { neighbourChunks[0], neighbourChunks[1], neighbourChunks[2] })
 							|| chunkManager.isWater(chunk, { neighbourChunks[0], neighbourChunks[1], neighbourChunks[2] }));
 				}
@@ -383,11 +385,11 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, Chunk* negativeXNei
 					};
 
 					bool exposed;
-					if (blockType == WATER) {
+					if (blockType == B_WATER) {
 						exposed = chunkManager.isAir(chunk, negativeXNeighbour, positiveXNeighbour, negativeZNeighbour, positiveZNeighbour, { neighbourChunks[0], neighbourChunks[1], neighbourChunks[2] });
 					}
 					else {
-						exposed = (blockType != AIR)
+						exposed = (blockType != B_AIR)
 							&& (chunkManager.isAir(chunk, negativeXNeighbour, positiveXNeighbour, negativeZNeighbour, positiveZNeighbour, { neighbourChunks[0], neighbourChunks[1], neighbourChunks[2] })
 								|| chunkManager.isWater(chunk, negativeXNeighbour, positiveXNeighbour, negativeZNeighbour, positiveZNeighbour, { neighbourChunks[0], neighbourChunks[1], neighbourChunks[2] }));
 					}

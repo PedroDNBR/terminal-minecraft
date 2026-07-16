@@ -1,16 +1,16 @@
 #pragma once
 enum BlockType
 {
-	AIR = 0,
-	GRASS,
-	DIRT,
-	STONE,
-	LOG,
-	LEAVES,
-	WATER,
-	SAND,
-	CACTUS,
-	BED_ROCK,
+	B_AIR = 0,
+	B_GRASS,
+	B_DIRT,
+	B_STONE,
+	B_LOG,
+	B_LEAVES,
+	B_WATER,
+	B_SAND,
+	B_CACTUS,
+	B_BEDROCK,
 	BLOCK_MAX
 };
 

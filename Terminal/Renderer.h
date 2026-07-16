@@ -20,7 +20,7 @@ public:
 	void drawPolygonWireframe(Vertex* verts, int count, uint8_t color);
 	void queueText(int x, int y, const std::string& text, uint8_t color);
 
-	uint8_t backgroundColor = Color::BLACK;
+	uint8_t backgroundColor = Color::C_BLACK;
 
 	float getAspectRatio()  const { return aspectRatio; }
 	int getLogicalWidth()  const { return logicalWidth; }

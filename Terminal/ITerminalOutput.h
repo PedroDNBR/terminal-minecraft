@@ -9,5 +9,5 @@ struct ITerminalOutput
 		const std::vector<RawTextPrint>& textToPrint,
 		int logicalWidth, int logicalHeight, 
 		int realWidth, int realHeight) = 0;
-	~ITerminalOutput() = default;
+	virtual ~ITerminalOutput() = default;
 };

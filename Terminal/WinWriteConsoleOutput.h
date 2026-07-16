@@ -18,7 +18,7 @@ private:
 
     std::vector<CHAR_INFO> screenBuffer;
 
-    static constexpr WORD PALETTE[COLOR_MAX] = {
+    static constexpr WORD PALETTE[16] = {
         /*[BLACK] = */              0,
         /*[BLUE] = */               1,
         /*[GREEN] = */              2,

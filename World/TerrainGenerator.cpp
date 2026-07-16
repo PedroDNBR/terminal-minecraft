@@ -5,7 +5,7 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 {
 	std::unique_ptr<Chunk> chunk = std::make_unique<Chunk>();
 	chunk->position = chunkPosition;
-	std::memset(chunk->blocks, AIR, sizeof(chunk->blocks));
+	std::memset(chunk->blocks, B_AIR, sizeof(chunk->blocks));
 
 	NoiseCache noiseCache = buildNoiseCache(chunkPosition, seed);
 
@@ -111,26 +111,26 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 				if (y == height)
 				{
 					if (temperature > 0.55f && humidity < 0.4f)
-						blockType = SAND;
+						blockType = B_SAND;
 					else if (temperature < 0.3f && humidity < 0.4f)
-						blockType = STONE;
+						blockType = B_STONE;
 					else if (humidity > 0.6f && !isRocky)
-						blockType = GRASS;
+						blockType = B_GRASS;
 					else
-						blockType = GRASS;
+						blockType = B_GRASS;
 				}
 				else if (y < height && y > height - 4)
 					if (temperature > 0.55f && humidity < 0.4f)
-						blockType = SAND;
+						blockType = B_SAND;
 					else if (temperature < 0.3f && humidity < 0.4f)
-						blockType = STONE;
+						blockType = B_STONE;
 					else
-						blockType = DIRT;
+						blockType = B_DIRT;
 
 				else if (y == 0)
-					blockType = BED_ROCK;
+					blockType = B_BEDROCK;
 				else
-					blockType = STONE;
+					blockType = B_STONE;
 
 				chunk->blocks[x][z][y] = blockType;
 			}
@@ -141,17 +141,17 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 				if (!dryBiome)
 				{
 					for (int y = height + 1; y <= SEA_LEVEL; y++)
-						chunk->blocks[x][z][y] = WATER;
-					chunk->blocks[x][z][height] = SAND;
-					if (height > 0) chunk->blocks[x][z][height - 1] = SAND;
+						chunk->blocks[x][z][y] = B_WATER;
+					chunk->blocks[x][z][height] = B_SAND;
+					if (height > 0) chunk->blocks[x][z][height - 1] = B_SAND;
 				}
 			}
 
 			if (
 				height >= SEA_LEVEL && height <= SEA_LEVEL + 1 &&
-				chunk->blocks[x][z][height] == GRASS
+				chunk->blocks[x][z][height] == B_GRASS
 				)
-				chunk->blocks[x][z][height] = SAND;
+				chunk->blocks[x][z][height] = B_SAND;
 
 			int caveTop = height - 2;
 			if (caveTop <= 1) continue;
@@ -163,62 +163,62 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		{
 			if (
 				isRockyMap[x][z] ||
-				chunk->blocks[x][z][heightMap[x][z]] == STONE
-		)
-			continue;
-
-		int surfaceY = heightMap[x][z];
-
-		if (surfaceY <= SEA_LEVEL)
-			continue;
-
-		float gridX = (float)x / NoiseConstants::NOISE_STEP;
-		float gridZ = (float)z / NoiseConstants::NOISE_STEP;
-		int intX = (int)gridX;
-		int intZ = (int)gridZ;
-		float fractionX = gridX - intX;
-		float fractionZ = gridZ - intZ;
-
-		float forestDensity = bilinearLerp(noiseCache.forest, intX, intZ, fractionX, fractionZ);
-
-		bool isDesert = (temperatureMap[x][z] > 0.55f && humidityMap[x][z] < 0.4f);
-
-		unsigned hash = (unsigned)(
-			(unsigned)(worldOffsetX + x) * 73856093u ^
-			(unsigned)(worldOffsetZ + z) * 19349663u ^
-			seed
-		);
-
-		if (isDesert)
-		{
-			if (chunk->blocks[x][z][surfaceY] != SAND)
+				chunk->blocks[x][z][heightMap[x][z]] == B_STONE
+				)
 				continue;
 
-			if (forestDensity < .70f)
+			int surfaceY = heightMap[x][z];
+
+			if (surfaceY <= SEA_LEVEL)
 				continue;
 
-			if ((hash % 350) != 0)
-				continue;
+			float gridX = (float)x / NoiseConstants::NOISE_STEP;
+			float gridZ = (float)z / NoiseConstants::NOISE_STEP;
+			int intX = (int)gridX;
+			int intZ = (int)gridZ;
+			float fractionX = gridX - intX;
+			float fractionZ = gridZ - intZ;
 
-			placeCactus(chunk.get(), x, surfaceY, z);
+			float forestDensity = bilinearLerp(noiseCache.forest, intX, intZ, fractionX, fractionZ);
+
+			bool isDesert = (temperatureMap[x][z] > 0.55f && humidityMap[x][z] < 0.4f);
+
+			unsigned hash = (unsigned)(
+				(unsigned)(worldOffsetX + x) * 73856093u ^
+				(unsigned)(worldOffsetZ + z) * 19349663u ^
+				seed
+				);
+
+			if (isDesert)
+			{
+				if (chunk->blocks[x][z][surfaceY] != B_SAND)
+					continue;
+
+				if (forestDensity < .70f)
+					continue;
+
+				if ((hash % 350) != 0)
+					continue;
+
+				placeCactus(chunk.get(), x, surfaceY, z);
+			}
+			else
+			{
+				if (chunk->blocks[x][z][surfaceY] != B_GRASS)
+					continue;
+
+				if (forestDensity < MIN_FOREST_DENSITY)
+					continue;
+
+				if ((hash % FOREST_TREE_PLACEMENT_OFFSET) != 0)
+					continue;
+
+				placeTree(chunk.get(), x, surfaceY, z);
+			}
 		}
-		else
-		{
-			if (chunk->blocks[x][z][surfaceY] != GRASS)
-				continue;
 
-			if (forestDensity < MIN_FOREST_DENSITY)
-				continue;
-
-			if ((hash % FOREST_TREE_PLACEMENT_OFFSET) != 0)
-				continue;
-
-			placeTree(chunk.get(), x, surfaceY, z);
-		}
-	}
-
-	unsigned wormHash = (unsigned)(worldOffsetX) * 73856093u ^ 
-		(unsigned)(worldOffsetZ) * 19349663u ^ 
+	unsigned wormHash = (unsigned)(worldOffsetX) * 73856093u ^
+		(unsigned)(worldOffsetZ) * 19349663u ^
 		((unsigned)seed * 2654435761u);
 
 	wormHash = wormHash >> 15;
@@ -235,7 +235,7 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		unsigned bitsStartX = h & 0xF;
 		unsigned bitsStartZ = (h >> 4) & 0xF;
 		unsigned bitsY = (h >> 8) & 0x3F;
-		unsigned bitsAngle = (h >> 14) & 0x3FF; 
+		unsigned bitsAngle = (h >> 14) & 0x3FF;
 		unsigned bitsDirectionY = (h >> 24) & 0x7F;
 
 		int sx = (int)bitsStartX;
@@ -265,23 +265,23 @@ NoiseCache TerrainGenerator::buildNoiseCache(ChunkCoord chunkPosition, uint32_t 
 	NoiseCache noiseCache;
 
 	for (int gx = 0; gx < NoiseConstants::NOISE_GRID; gx++)
-	for (int gz = 0; gz < NoiseConstants::NOISE_GRID; gz++)
-	{
-		float worldX = (float)(chunkPosition.x * Chunk::SIZE_X + gx * NoiseConstants::NOISE_STEP);
-		float worldZ = (float)(chunkPosition.z * Chunk::SIZE_Z + gz * NoiseConstants::NOISE_STEP);
+		for (int gz = 0; gz < NoiseConstants::NOISE_GRID; gz++)
+		{
+			float worldX = (float)(chunkPosition.x * Chunk::SIZE_X + gx * NoiseConstants::NOISE_STEP);
+			float worldZ = (float)(chunkPosition.z * Chunk::SIZE_Z + gz * NoiseConstants::NOISE_STEP);
 
-		float warpedX = smoothNoise(worldX * NoiseConstants::WARP_FREQUENCY, worldZ * NoiseConstants::WARP_FREQUENCY, seed + 11111u);
-		float warpedZ = smoothNoise(worldX * NoiseConstants::WARP_FREQUENCY, worldZ * NoiseConstants::WARP_FREQUENCY, seed + 22222u);
+			float warpedX = smoothNoise(worldX * NoiseConstants::WARP_FREQUENCY, worldZ * NoiseConstants::WARP_FREQUENCY, seed + 11111u);
+			float warpedZ = smoothNoise(worldX * NoiseConstants::WARP_FREQUENCY, worldZ * NoiseConstants::WARP_FREQUENCY, seed + 22222u);
 
-		noiseCache.temperature[gx][gz] = smoothNoise(worldX * NoiseConstants::BIOME_FREQUENCY, worldZ * NoiseConstants::BIOME_FREQUENCY, seed + 99991u);
-		noiseCache.humidity[gx][gz] = smoothNoise(worldX * NoiseConstants::BIOME_FREQUENCY, worldZ * NoiseConstants::BIOME_FREQUENCY, seed + 88881u);
+			noiseCache.temperature[gx][gz] = smoothNoise(worldX * NoiseConstants::BIOME_FREQUENCY, worldZ * NoiseConstants::BIOME_FREQUENCY, seed + 99991u);
+			noiseCache.humidity[gx][gz] = smoothNoise(worldX * NoiseConstants::BIOME_FREQUENCY, worldZ * NoiseConstants::BIOME_FREQUENCY, seed + 88881u);
 
-		noiseCache.base[gx][gz] = smoothNoise((worldX + warpedX * 30.0f) * NoiseConstants::BASE_FREQUENCY, (worldZ + warpedZ * 30.0f) * NoiseConstants::BASE_FREQUENCY, seed + 1u);
-		noiseCache.hills[gx][gz] = fractalNoise(worldX * NoiseConstants::HILLS_FREQUENCY, worldZ * NoiseConstants::HILLS_FREQUENCY, seed + 2u);
-		noiseCache.peaks[gx][gz] = smoothNoise(worldX * NoiseConstants::PEAKS_FREQUENCY, worldZ * NoiseConstants::PEAKS_FREQUENCY, seed + 3u);
-		noiseCache.valleys[gx][gz] = smoothNoise(worldX * NoiseConstants::VALLEYS_FREQUENCY, worldZ * NoiseConstants::VALLEYS_FREQUENCY, seed + 777u);
-		noiseCache.forest[gx][gz] = smoothNoise(worldX * NoiseConstants::FOREST_FREQUENCY, worldZ * NoiseConstants::FOREST_FREQUENCY, seed + 5555u);
-	}
+			noiseCache.base[gx][gz] = smoothNoise((worldX + warpedX * 30.0f) * NoiseConstants::BASE_FREQUENCY, (worldZ + warpedZ * 30.0f) * NoiseConstants::BASE_FREQUENCY, seed + 1u);
+			noiseCache.hills[gx][gz] = fractalNoise(worldX * NoiseConstants::HILLS_FREQUENCY, worldZ * NoiseConstants::HILLS_FREQUENCY, seed + 2u);
+			noiseCache.peaks[gx][gz] = smoothNoise(worldX * NoiseConstants::PEAKS_FREQUENCY, worldZ * NoiseConstants::PEAKS_FREQUENCY, seed + 3u);
+			noiseCache.valleys[gx][gz] = smoothNoise(worldX * NoiseConstants::VALLEYS_FREQUENCY, worldZ * NoiseConstants::VALLEYS_FREQUENCY, seed + 777u);
+			noiseCache.forest[gx][gz] = smoothNoise(worldX * NoiseConstants::FOREST_FREQUENCY, worldZ * NoiseConstants::FOREST_FREQUENCY, seed + 5555u);
+		}
 
 	return noiseCache;
 }
@@ -298,38 +298,38 @@ void TerrainGenerator::placeTree(Chunk* chunk, int x, int baseY, int z)
 		if (trunkY >= Chunk::SIZE_Y)
 			break;
 
-		chunk->blocks[x][z][trunkY] = LOG;
+		chunk->blocks[x][z][trunkY] = B_LOG;
 	}
 
 	int topY = baseY + trunkHeight;
 
 	for (int deltaY = -1; deltaY <= TREE_TRUNK_LEAVES_Y_RADIUS; deltaY++)
-	for (int deltaX = -TREE_TRUNK_LEAVES_XZ_RADIUS; deltaX <= TREE_TRUNK_LEAVES_XZ_RADIUS; deltaX++)
-	for (int deltaZ = -TREE_TRUNK_LEAVES_XZ_RADIUS; deltaZ <= TREE_TRUNK_LEAVES_XZ_RADIUS; deltaZ++)
-	{
-		float elipseX = (float)deltaX / TREE_TRUNK_LEAVES_XZ_RADIUS;
-		float elipseY = (float)deltaY / TREE_TRUNK_LEAVES_Y_RADIUS;
-		float elipseZ = (float)deltaZ / TREE_TRUNK_LEAVES_XZ_RADIUS;
+		for (int deltaX = -TREE_TRUNK_LEAVES_XZ_RADIUS; deltaX <= TREE_TRUNK_LEAVES_XZ_RADIUS; deltaX++)
+			for (int deltaZ = -TREE_TRUNK_LEAVES_XZ_RADIUS; deltaZ <= TREE_TRUNK_LEAVES_XZ_RADIUS; deltaZ++)
+			{
+				float elipseX = (float)deltaX / TREE_TRUNK_LEAVES_XZ_RADIUS;
+				float elipseY = (float)deltaY / TREE_TRUNK_LEAVES_Y_RADIUS;
+				float elipseZ = (float)deltaZ / TREE_TRUNK_LEAVES_XZ_RADIUS;
 
-		if (elipseX * elipseX + elipseY * elipseY + elipseZ * elipseZ > 1.0f)
-			continue;	
+				if (elipseX * elipseX + elipseY * elipseY + elipseZ * elipseZ > 1.0f)
+					continue;
 
-		int targetX = x + deltaX;
-		int targetY = topY + deltaY;
-		int targetZ = z + deltaZ;
+				int targetX = x + deltaX;
+				int targetY = topY + deltaY;
+				int targetZ = z + deltaZ;
 
-		if (targetX < 0 || targetX >= Chunk::SIZE_X)
-			continue;
-		if (targetY < 0 || targetY >= Chunk::SIZE_Y)
-			continue;
-		if (targetZ < 0 || targetZ >= Chunk::SIZE_Z)
-			continue;
+				if (targetX < 0 || targetX >= Chunk::SIZE_X)
+					continue;
+				if (targetY < 0 || targetY >= Chunk::SIZE_Y)
+					continue;
+				if (targetZ < 0 || targetZ >= Chunk::SIZE_Z)
+					continue;
 
-		if (chunk->blocks[targetX][targetZ][targetY] == LOG)
-			continue;
+				if (chunk->blocks[targetX][targetZ][targetY] == B_LOG)
+					continue;
 
-		chunk->blocks[targetX][targetZ][targetY] = LEAVES;
-	}
+				chunk->blocks[targetX][targetZ][targetY] = B_LEAVES;
+			}
 }
 
 void TerrainGenerator::placeCactus(Chunk* chunk, int x, int baseY, int z)
@@ -344,7 +344,7 @@ void TerrainGenerator::placeCactus(Chunk* chunk, int x, int baseY, int z)
 		if (trunkY >= Chunk::SIZE_Y)
 			break;
 
-		chunk->blocks[x][z][trunkY] = CACTUS;
+		chunk->blocks[x][z][trunkY] = B_CACTUS;
 	}
 }
 
@@ -376,28 +376,28 @@ void TerrainGenerator::carveWormCave(Chunk* chunk, int heightMap[Chunk::SIZE_X][
 		int r = (int)radius;
 
 		for (int deltaX = -r; deltaX <= r; deltaX++)
-		for (int deltaY = -r; deltaY <= r; deltaY++)
-		for (int deltaZ = -r; deltaZ <= r; deltaZ++)
-		{
-			if (deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > r * r)
+			for (int deltaY = -r; deltaY <= r; deltaY++)
+				for (int deltaZ = -r; deltaZ <= r; deltaZ++)
+				{
+					if (deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > r * r)
+						continue;
+
+					int bx = caveX + deltaX;
+					int by = caveY + deltaY;
+					int bz = caveZ + deltaZ;
+
+					if (bx < 0 || bx >= Chunk::SIZE_X)
+						continue;
+					if (bz < 0 || bz >= Chunk::SIZE_Z)
+						continue;
+					if (by < 1)
+						continue;
+					if (by >= heightMap[bx][bz] - 2)
+						continue;
+					if (chunk->blocks[bx][bz][by] == B_WATER)
 				continue;
 
-			int bx = caveX + deltaX;
-			int by = caveY + deltaY;
-			int bz = caveZ + deltaZ;
-
-			if (bx < 0 || bx >= Chunk::SIZE_X)
-				continue;
-			if (bz < 0 || bz >= Chunk::SIZE_Z)
-				continue;
-			if (by < 1)
-				continue;
-			if (by >= heightMap[bx][bz] - 2)
-				continue;
-			if (chunk->blocks[bx][bz][by] == WATER)
-				continue;
-
-			chunk->blocks[bx][bz][by] = AIR;
+			chunk->blocks[bx][bz][by] = B_AIR;
 		}
 	}
 }

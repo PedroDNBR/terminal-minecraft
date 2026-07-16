@@ -21,7 +21,7 @@ int main()
 
 	Renderer renderer;
 	renderer.init();
-	renderer.backgroundColor = BRIGHT_CYAN;
+	renderer.backgroundColor = colorIndex(C_SKY, SHADE_LEVELS - 1);
 
 
 #if USE_VT_MODE
@@ -134,9 +134,9 @@ int main()
 			ScopedTimer t(presentMs);
 		
 #if USE_VT_MODE
-			vtOutput.present(renderer.getColorBuffer(), renderer.getTextToPrint(), renderer.getRealWidth(), renderer.getRealHeight(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
+			vtOutput.present(renderer.getColorBuffer(), renderer.getTextToPrint(), renderer.getLogicalWidth(), renderer.getLogicalHeight(), renderer.getRealWidth(), renderer.getRealHeight());
 #else
-			winOutput.present(renderer.getColorBuffer(), renderer.getTextToPrint(), renderer.getRealWidth(), renderer.getRealHeight(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
+			winOutput.present(renderer.getColorBuffer(), renderer.getTextToPrint(), renderer.getLogicalWidth(), renderer.getLogicalHeight(), renderer.getRealWidth(), renderer.getRealHeight());
 #endif
 		}
 
@@ -150,11 +150,11 @@ int main()
 		packAccumulator += renderer.packMs;
 		writeAccumulator += renderer.writeMs;
 
-		renderer.queueText(2, 0, "FPS: " + std::to_string(currentFPS), WHITE);
-		renderer.queueText(2, 1, "chunks: " + std::to_string(chunkManager.chunks.size()), WHITE);
-		renderer.queueText(2, 2, "pending: " + std::to_string(chunkManager.pendingCoords.size()), WHITE);
-		renderer.queueText(2, 3, "meshingQueue: " + std::to_string(chunkManager.meshingQueue.size()), WHITE);
-		renderer.queueText(2, 4, "chunksMeshesByPosition: " + std::to_string(voxelRenderer.chunksMeshesByPosition.size()), WHITE);
+		renderer.queueText(2, 0, "FPS: " + std::to_string(currentFPS), C_WHITE);
+		renderer.queueText(2, 1, "chunks: " + std::to_string(chunkManager.chunks.size()), C_WHITE);
+		renderer.queueText(2, 2, "pending: " + std::to_string(chunkManager.pendingCoords.size()), C_WHITE);
+		renderer.queueText(2, 3, "meshingQueue: " + std::to_string(chunkManager.meshingQueue.size()), C_WHITE);
+		renderer.queueText(2, 4, "chunksMeshesByPosition: " + std::to_string(voxelRenderer.chunksMeshesByPosition.size()), C_WHITE);
 		
 		fpsCounter++;
 		auto  fpsNow = std::chrono::high_resolution_clock::now();
@@ -182,14 +182,14 @@ int main()
 			fpsWinStart = fpsNow;
 		}
 
-		renderer.queueText(2, 6, "loadChunksMs: " + std::to_string(loadChunksAverage), 15);
-		renderer.queueText(2, 7, "commitReadyChunksMs: " + std::to_string(commitReadyChunksAverage), 15);
-		renderer.queueText(2, 8, "unloadChunksMeshesMs: " + std::to_string(unloadChunksMeshesAverage), 15);
-		renderer.queueText(2, 9, "renderMs: " + std::to_string(renderAverage), 15);
-		renderer.queueText(2, 10, "packMs: " + std::to_string(packAverage), 15);
-		renderer.queueText(2, 11, "writeMs: " + std::to_string(writeAverage), 15);
-		renderer.queueText(2, 12, "presentMs: " + std::to_string(presentAverage), 15);
-		renderer.queueText(2, 13, "" + std::to_string(renderer.getLogicalWidth()) + "x" + std::to_string(renderer.getLogicalHeight()), 15);
+		renderer.queueText(2, 6, "loadChunksMs: " + std::to_string(loadChunksAverage), C_WHITE);
+		renderer.queueText(2, 7, "commitReadyChunksMs: " + std::to_string(commitReadyChunksAverage), C_WHITE);
+		renderer.queueText(2, 8, "unloadChunksMeshesMs: " + std::to_string(unloadChunksMeshesAverage), C_WHITE);
+		renderer.queueText(2, 9, "renderMs: " + std::to_string(renderAverage), C_WHITE);
+		renderer.queueText(2, 10, "packMs: " + std::to_string(packAverage), C_WHITE);
+		renderer.queueText(2, 11, "writeMs: " + std::to_string(writeAverage), C_WHITE);
+		renderer.queueText(2, 12, "presentMs: " + std::to_string(presentAverage), C_WHITE);
+		renderer.queueText(2, 13, "" + std::to_string(renderer.getLogicalWidth()) + "x" + std::to_string(renderer.getLogicalHeight()), C_WHITE);
 	
 		if (GetKeyState('P') & 0x8000)
 			break;

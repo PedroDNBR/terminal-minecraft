@@ -1,7 +1,7 @@
 #include "VTOutput.h"
 #include "../Platform/Platform.h"
 
-void VTOutput::present(const std::vector<uint8_t>& colorBuffer, const std::vector<RawTextPrint>& textToPrint, int realWidth, int realHeight, int logicalWidth, int logicalHeight)
+void VTOutput::present(const std::vector<uint8_t>& colorBuffer, const std::vector<RawTextPrint>& textToPrint, int logicalWidth, int logicalHeight, int realWidth, int realHeight)
 {
 	outputFrame.clear();
 	outputFrame += "\x1b[H";
@@ -20,13 +20,13 @@ void VTOutput::present(const std::vector<uint8_t>& colorBuffer, const std::vecto
 
 		if (topColorIndex != lastTopColorIndex)
 		{
-			appendBackground(outputFrame, PALETTE[topColorIndex]);
+			appendBackground(outputFrame, VTPalette::SHADED_PALETTE[topColorIndex]);
 			lastTopColorIndex = topColorIndex;
 		}
 
 		if (bottomColorIndex != lastBottomColorIndex)
 		{
-			appendForeground(outputFrame, PALETTE[bottomColorIndex]);
+			appendForeground(outputFrame, VTPalette::SHADED_PALETTE[bottomColorIndex]);
 			lastBottomColorIndex = bottomColorIndex;
 		}
 
@@ -41,8 +41,8 @@ void VTOutput::present(const std::vector<uint8_t>& colorBuffer, const std::vecto
 		outputFrame += std::to_string(textPrint.x + 1);
 		outputFrame += "H";
 
-		appendForeground(outputFrame, PALETTE[textPrint.color]);
-		appendBackground(outputFrame, PALETTE[BLACK]);
+		appendForeground(outputFrame, VTPalette::BASE_PALETTE[textPrint.color]);
+		appendBackground(outputFrame, VTPalette::BASE_PALETTE[C_BLACK]);
 
 		outputFrame += textPrint.text;
 	}
