@@ -1,7 +1,9 @@
-#include "TerrainGenerator.h"
+#include <queue>
+#include "ChunkManager.h"
 #include "Noise/Noise.h"
+#include "Cube.h"
 
-std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosition)
+std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosition, ChunkManager& chunkManager)
 {
 	std::unique_ptr<Chunk> chunk = std::make_unique<Chunk>();
 	chunk->position = chunkPosition;
@@ -9,7 +11,6 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 
 	NoiseCache noiseCache = buildNoiseCache(chunkPosition, seed);
 
-	int heightMap[Chunk::SIZE_X][Chunk::SIZE_Z];
 	bool isRockyMap[Chunk::SIZE_X][Chunk::SIZE_Z];
 
 	float temperatureMap[Chunk::SIZE_X][Chunk::SIZE_Z];
@@ -67,16 +68,16 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		if(heightFinal > Chunk::SIZE_Y - 1)
 			heightFinal = Chunk::SIZE_Y - 1;
 
-		heightMap[x][z] = (int)heightFinal + OFFSET_ROUND;
-		isRockyMap[x][z] = (heightMap[x][z] > 48);
+		chunk->heightMap[x][z] = (int)heightFinal + OFFSET_ROUND;
+		isRockyMap[x][z] = (chunk->heightMap[x][z] > 48);
 	}
 
 	for (int x = 0; x < Chunk::SIZE_X; x++)
 	for (int z = 0; z < Chunk::SIZE_Z; z++)
 	{
-		int height = heightMap[x][z];
-		int heightX = heightMap[x < Chunk::SIZE_X - 1 ? x + 1 : x][z];
-		int heightZ = heightMap[x][z < Chunk::SIZE_Z - 1 ? z + 1 : z];
+		int height = chunk->heightMap[x][z];
+		int heightX = chunk->heightMap[x < Chunk::SIZE_X - 1 ? x + 1 : x][z];
+		int heightZ = chunk->heightMap[x][z < Chunk::SIZE_Z - 1 ? z + 1 : z];
 
 		float steepness = fabsf((float)(height - heightX)) + fabsf((float)(height - heightZ));
 		isRockyMap[x][z] = (height > 58) || (height > 50 && steepness > .6f);
@@ -100,7 +101,7 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 	for (int x = 0; x < Chunk::SIZE_X; x++)
 		for (int z = 0; z < Chunk::SIZE_Z; z++)
 		{
-			int height = heightMap[x][z];
+			int height = chunk->heightMap[x][z];
 			bool isRocky = isRockyMap[x][z];
 			float temperature = temperatureMap[x][z];
 			float humidity = humidityMap[x][z];
@@ -159,63 +160,63 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		}
 
 	for (int x = 0; x < Chunk::SIZE_X; x++)
-		for (int z = 0; z < Chunk::SIZE_Z; z++)
+	for (int z = 0; z < Chunk::SIZE_Z; z++)
+	{
+		if (
+			isRockyMap[x][z] ||
+			chunk->blocks[x][z][chunk->heightMap[x][z]] == B_STONE
+			)
+			continue;
+
+		int surfaceY = chunk->heightMap[x][z];
+
+		if (surfaceY <= SEA_LEVEL)
+			continue;
+
+		float gridX = (float)x / NoiseConstants::NOISE_STEP;
+		float gridZ = (float)z / NoiseConstants::NOISE_STEP;
+		int intX = (int)gridX;
+		int intZ = (int)gridZ;
+		float fractionX = gridX - intX;
+		float fractionZ = gridZ - intZ;
+
+		float forestDensity = bilinearLerp(noiseCache.forest, intX, intZ, fractionX, fractionZ);
+
+		bool isDesert = (temperatureMap[x][z] > 0.55f && humidityMap[x][z] < 0.4f);
+
+		unsigned hash = (unsigned)(
+			(unsigned)(worldOffsetX + x) * 73856093u ^
+			(unsigned)(worldOffsetZ + z) * 19349663u ^
+			seed
+			);
+
+		if (isDesert)
 		{
-			if (
-				isRockyMap[x][z] ||
-				chunk->blocks[x][z][heightMap[x][z]] == B_STONE
-				)
+			if (chunk->blocks[x][z][surfaceY] != B_SAND)
 				continue;
 
-			int surfaceY = heightMap[x][z];
-
-			if (surfaceY <= SEA_LEVEL)
+			if (forestDensity < .70f)
 				continue;
 
-			float gridX = (float)x / NoiseConstants::NOISE_STEP;
-			float gridZ = (float)z / NoiseConstants::NOISE_STEP;
-			int intX = (int)gridX;
-			int intZ = (int)gridZ;
-			float fractionX = gridX - intX;
-			float fractionZ = gridZ - intZ;
+			if ((hash % 350) != 0)
+				continue;
 
-			float forestDensity = bilinearLerp(noiseCache.forest, intX, intZ, fractionX, fractionZ);
-
-			bool isDesert = (temperatureMap[x][z] > 0.55f && humidityMap[x][z] < 0.4f);
-
-			unsigned hash = (unsigned)(
-				(unsigned)(worldOffsetX + x) * 73856093u ^
-				(unsigned)(worldOffsetZ + z) * 19349663u ^
-				seed
-				);
-
-			if (isDesert)
-			{
-				if (chunk->blocks[x][z][surfaceY] != B_SAND)
-					continue;
-
-				if (forestDensity < .70f)
-					continue;
-
-				if ((hash % 350) != 0)
-					continue;
-
-				placeCactus(chunk.get(), x, surfaceY, z);
-			}
-			else
-			{
-				if (chunk->blocks[x][z][surfaceY] != B_GRASS)
-					continue;
-
-				if (forestDensity < MIN_FOREST_DENSITY)
-					continue;
-
-				if ((hash % FOREST_TREE_PLACEMENT_OFFSET) != 0)
-					continue;
-
-				placeTree(chunk.get(), x, surfaceY, z);
-			}
+			placeCactus(chunk.get(), x, surfaceY, z);
 		}
+		else
+		{
+			if (chunk->blocks[x][z][surfaceY] != B_GRASS)
+				continue;
+
+			if (forestDensity < MIN_FOREST_DENSITY)
+				continue;
+
+			if ((hash % FOREST_TREE_PLACEMENT_OFFSET) != 0)
+				continue;
+
+			placeTree(chunk.get(), x, surfaceY, z);
+		}
+	}
 
 	unsigned wormHash = (unsigned)(worldOffsetX) * 73856093u ^
 		(unsigned)(worldOffsetZ) * 19349663u ^
@@ -241,12 +242,12 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		int sx = (int)bitsStartX;
 		int sz = (int)bitsStartZ;
 
-		int columnHeight = heightMap[sx][sz];
+		int columnHeight = chunk->heightMap[sx][sz];
 		if (columnHeight < 8) continue;
 
 		float startX = (float)sx;
 		float startZ = (float)sz;
-		float startY = (float)(4 + bitsY % (columnHeight - 6));
+		float startY = (float)(4 + bitsY % (columnHeight + 3));
 
 		float angle = (float)bitsAngle / 1024.0f * 6.2831853f;
 
@@ -254,7 +255,69 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		float directionZ = sinf(angle);
 		float directionY = -0.4f + (float)bitsDirectionY / 128.0f * 0.8f;
 
-		carveWormCave(chunk.get(), heightMap, startX, startY, startZ, directionX, directionY, directionZ, WORM_CAVE_RADIUS, WORM_CAVE_LENGTH);
+		carveWormCave(chunk.get(), startX, startY, startZ, directionX, directionY, directionZ, WORM_CAVE_RADIUS, WORM_CAVE_LENGTH);
+	}
+
+	for (int x = 0; x < Chunk::SIZE_X; x++)
+	for (int z = 0; z < Chunk::SIZE_Z; z++)
+	{
+		uint8_t sky = 7;
+		for (int y = Chunk::SIZE_Y - 1; y >= 0; y--)
+		{
+			uint8_t opacity = chunkManager.OPACITY[chunk->blocks[x][z][y]];
+			if (opacity >= 7)
+				sky = 0;
+			/*else if (isExposedToSky)
+				chunk->skyLight[x][z][y] = 7;*/
+			else
+				sky = (std::max)(0, sky - opacity);
+
+			chunk->skyLight[x][z][y] = sky;
+		}
+	}
+
+	std::queue<Vector3Int> lightFloodQueue;
+
+	for (int x = 0; x < Chunk::SIZE_X; x++)
+	for (int z = 0; z < Chunk::SIZE_Z; z++)
+	for (int y = 0; y < Chunk::SIZE_Y; y++)
+	{
+		if(chunk->skyLight[x][z][y] > 0)
+			lightFloodQueue.push({ x, y, z });
+	}
+
+	while (!lightFloodQueue.empty())
+	{
+		Vector3Int blockPosition = lightFloodQueue.front();
+		lightFloodQueue.pop();
+
+		int lightLevel = chunk->skyLight[blockPosition.x][blockPosition.z][blockPosition.y];
+		if (lightLevel <= 1)
+			continue;
+
+		for (int f = 0; f < 6; f++)
+		{
+			Vector3Int neighborPosition = blockPosition + cubeFacesDirections[f];
+			if (neighborPosition.x < 0 || neighborPosition.x >= Chunk::SIZE_X ||
+				neighborPosition.y < 0 || neighborPosition.y >= Chunk::SIZE_Y ||
+				neighborPosition.z < 0 || neighborPosition.z >= Chunk::SIZE_Z)
+				continue;
+
+			uint8_t opacity = chunkManager.OPACITY[chunk->blocks[neighborPosition.x][neighborPosition.z][neighborPosition.y]];
+
+			if(opacity >= 7)
+				continue;
+
+			uint8_t newLightLevel = (std::max)(0, lightLevel - 1 - opacity);
+			if (newLightLevel == 0)
+				continue;
+			if (chunk->skyLight[neighborPosition.x][neighborPosition.z][neighborPosition.y] < newLightLevel)
+			{
+				chunk->skyLight[neighborPosition.x][neighborPosition.z][neighborPosition.y] = newLightLevel;
+				lightFloodQueue.push(neighborPosition);
+			}
+		}
+
 	}
 
 	return chunk;
@@ -348,7 +411,7 @@ void TerrainGenerator::placeCactus(Chunk* chunk, int x, int baseY, int z)
 	}
 }
 
-void TerrainGenerator::carveWormCave(Chunk* chunk, int heightMap[Chunk::SIZE_X][Chunk::SIZE_Z], float startX, float startY, float startZ, float directionX, float directionY, float directionZ, float radius, int length)
+void TerrainGenerator::carveWormCave(Chunk* chunk, float startX, float startY, float startZ, float directionX, float directionY, float directionZ, float radius, int length)
 {
 	for (int step = 0; step < length; step++)
 	{
@@ -392,7 +455,7 @@ void TerrainGenerator::carveWormCave(Chunk* chunk, int heightMap[Chunk::SIZE_X][
 						continue;
 					if (by < 1)
 						continue;
-					if (by >= heightMap[bx][bz] - 2)
+					if (by >= chunk->heightMap[bx][bz] - 2)
 						continue;
 					if (chunk->blocks[bx][bz][by] == B_WATER)
 				continue;

@@ -22,14 +22,17 @@ namespace VTPalette
         /*COBBLESTONE*/  0x626262,
         /*WATER*/        0x002AFF,
         /*BEDROCK*/      0x333333,
-        /*SKY*/          0x74BAF2
+        /*SKY*/          0x74BAF2,
+        /*C_SKY_NIGHT*/  0x54587D
     };
     static_assert(sizeof(BASE_PALETTE) / sizeof(BASE_PALETTE[0]) == COLOR_MAX,
         "BASE e enum Color fora de sincronia");
 
     constexpr uint32_t shadeRGB(uint32_t rgb, int shade)
     {
-        int percent = 20 + (80 * shade) / (SHADE_LEVELS - 1);
+        int t = (100 * shade) / (SHADE_LEVELS - 1);
+        int quad = (t * t) / 100;
+        int percent = 2 + (98 * (t + quad)) / 200;
         int r = (int)((rgb >> 16) & 0xFF) * percent / 100;
         int g = (int)((rgb >> 8) & 0xFF) * percent / 100;
         int b = (int)(rgb & 0xFF) * percent / 100;

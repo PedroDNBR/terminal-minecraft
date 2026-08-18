@@ -2,20 +2,22 @@
 #include <unordered_map>
 #include "DirectionsXZ.h"
 #include "ReadyMesh.h"
+#include "Quad.h"
+#include "Frustum.h"
+#include "VisibleMesh.h"
 #include "../Core/Vector.h"
 #include "../Terminal/Renderer.h"
 #include "../Core/Vertex.h"
-#include "Quad.h"
 #include "../World/Camera.h"
 #include "../World/Chunk/Chunk.h"
 #include "../World/ChunkManager.h"
-#include "Frustum.h"
-#include "VisibleMesh.h"
+#include "../World/Cube.h"
+#include "../World/Lighting.h"
 
 class VoxelRenderer
 {
 public:
-	void render(Renderer& renderer, Camera& camera);
+	void render(Renderer& renderer, Camera& camera, Lighting& lighting);
 	std::unordered_map<ChunkCoord, std::vector<Quad>, ChunkCoordHash> chunksMeshesByPosition;
 
 	void meshBuilderWorker(ChunkManager& chunkManager);
@@ -56,28 +58,10 @@ private:
 	
 	static const int MAX_SLICE = Chunk::SIZE_X * Chunk::SIZE_Y;
 
-	const Vector3Int cubeFacesDirections[6] = {
-		{0,0,-1},
-		{0,0,1},
-		{-1,0,0},
-		{1,0,0},
-		{0,1,0},
-		{0,-1,0}
-	};
-
 	const DirectionsXZ neighboursDirections[4] = {
 		{ 1,  0},
 		{-1,  0},
 		{ 0,  1},
 		{ 0, -1}
-	};
-
-	const int FACE_SHADE[6] = {
-		2,
-		2,
-		3,
-		3,
-		4,
-		1,
 	};
 };

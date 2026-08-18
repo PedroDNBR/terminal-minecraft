@@ -21,8 +21,12 @@ int main()
 
 	Renderer renderer;
 	renderer.init();
-	renderer.backgroundColor = colorIndex(C_SKY, SHADE_LEVELS - 1);
 
+	const float DAY_LENGTH = 30.0f;
+	float timeOfDay = .3f;
+
+
+	Lighting lighting;
 
 #if USE_VT_MODE
 	VTOutput vtOutput;
@@ -94,6 +98,13 @@ int main()
 		lastTime = now;
 		if (deltaTime > 0.1f) deltaTime = 0.1f;
 
+		timeOfDay += deltaTime / DAY_LENGTH;
+
+		lighting = computeLighting(timeOfDay);
+
+		Color skyColor = (lighting.globalLight >= 4) ? C_SKY : C_SKY_NIGHT;
+		renderer.backgroundColor = colorIndex(skyColor, lighting.globalLight);
+
 		double loadChunksMs = 0;
 		double commitReadyChunksMs = 0;
 		double unloadChunksMeshesMs = 0;
@@ -127,7 +138,7 @@ int main()
 
 		{
 			ScopedTimer t(renderMs);
-			voxelRenderer.render(renderer, camera);
+			voxelRenderer.render(renderer, camera, lighting);
 		}
 
 		{

@@ -161,6 +161,8 @@
     <ClInclude Include="Terminal\VTOutput.h" />
     <ClInclude Include="Terminal\WinWriteConsoleOutput.h" />
     <ClInclude Include="World\ChunkManager.h" />
+    <ClInclude Include="World\Cube.h" />
+    <ClInclude Include="World\Lighting.h" />
     <ClInclude Include="World\TerrainGenerator.h" />
     <ClInclude Include="World\Camera.h" />
     <ClInclude Include="World\Noise\Noise.h" />

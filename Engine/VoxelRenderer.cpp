@@ -1,7 +1,7 @@
 #include "VoxelRenderer.h"
 #include "Quad.h"
 
-void VoxelRenderer::render(Renderer& renderer, Camera& camera)
+void VoxelRenderer::render(Renderer& renderer, Camera& camera, Lighting& lighting)
 {
 	if (meshListDirty)
 	{
@@ -64,7 +64,11 @@ void VoxelRenderer::render(Renderer& renderer, Camera& camera)
 			for (int i = 0; i < clippedCount; i++)
 				projected[i] = projectViewSpacePoint(clipped[i], camera, renderer.getAspectRatio(), renderer.getLogicalWidth(), renderer.getLogicalHeight());
 
-			uint8_t shadedColorIndex = colorIndex((Color)quad.color, FACE_SHADE[quad.faceIndex]);
+            int skyReaching = (std::min)((int)quad.skyLight, lighting.globalLight);
+			//int shade = skyReaching + FACE_SHAPE[quad.faceIndex] + lighting.faceShading[quad.faceIndex];
+			int shade = (std::min)((int)quad.skyLight, lighting.globalLight) + FACE_SHAPE[quad.faceIndex] + lighting.faceShading[quad.faceIndex];
+			shade = (std::max)(shade, (int)(skyReaching * .33f));
+			uint8_t shadedColorIndex = colorIndex((Color)quad.color, shade);
 
 			for (int i = 1; i + 1 < clippedCount; i++)
 				renderer.drawFilledQuad(projected[0], projected[i], projected[i + 1], projected[i + 1], shadedColorIndex);
@@ -269,11 +273,15 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, ChunkManager& chunk
 				coordinates[uAxis] = u;
 				coordinates[vAxis] = v;
 
-				BlockType blockType = chunk->blocks[coordinates[0]][coordinates[2]][coordinates[1]];
+				int blockX = coordinates[0];
+				int blockY = coordinates[1];
+				int blockZ = coordinates[2];
+
+				BlockType blockType = chunk->blocks[blockX][blockZ][blockY];
 				int neighbourChunks[3] = {
-					coordinates[0] + cubeFacesDirections[f][0],
-					coordinates[1] + cubeFacesDirections[f][1],
-					coordinates[2] + cubeFacesDirections[f][2] 
+					blockX + cubeFacesDirections[f][0],
+					blockY + cubeFacesDirections[f][1],
+					blockZ + cubeFacesDirections[f][2]
 				};
 
 				bool exposed;
@@ -286,7 +294,17 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, ChunkManager& chunk
 							|| chunkManager.isWater(chunk, { neighbourChunks[0], neighbourChunks[1], neighbourChunks[2] }));
 				}
 
-				mask[u * sizeV + v] = exposed ? (int)blockType : -1;
+				int depth = chunk->heightMap[blockX][blockZ] - blockY;
+
+				int skyLight = SHADE_LEVELS - 1 - (depth / SKYLIGHT_FALLOFF);
+
+				if (skyLight < 0)
+					skyLight = 0;
+
+				if (skyLight > SHADE_LEVELS - 1)
+					skyLight = SHADE_LEVELS - 1;
+
+				mask[u * sizeV + v] = exposed ? ((int)blockType * SHADE_LEVELS + skyLight) : -1;
 				used[u * sizeV + v] = false;
 			}
 
@@ -297,13 +315,15 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, ChunkManager& chunk
 				if (used[index] || mask[index] < 0)
 					continue;
 
-				int blockType = mask[index];
+				int cell = mask[index];
+				int blockType = mask[index] / SHADE_LEVELS;
+				int skyLight = mask[index] % SHADE_LEVELS;
 
 				int spanV = 1;
 				while (
 					v + spanV < sizeV &&
 					!used[u * sizeV + v + spanV] &&
-					mask[u * sizeV + v + spanV] == blockType
+					mask[u * sizeV + v + spanV] == cell
 					)
 					spanV++;
 
@@ -314,7 +334,7 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, ChunkManager& chunk
 					for (int k = 0; k < spanV && ok; k++)
 					{
 						int neighbourIndex = (u + spanU) * sizeV + v + k;
-						if (used[neighbourIndex] || mask[neighbourIndex] != blockType)
+						if (used[neighbourIndex] || mask[neighbourIndex] != cell)
 							ok = false;
 					}
 					if (!ok)
@@ -336,7 +356,8 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, ChunkManager& chunk
 				quad.vStart = v;
 				quad.uSpan = spanU;
 				quad.vSpan = spanV;
-				quad.color = chunkManager.blockProperties[blockType].faceColors[f];
+				quad.color = chunkManager.BLOCK_PROPERTIES[blockType].faceColors[f];
+				quad.skyLight = (uint8_t)skyLight;
 
 				chunkQuads.push_back(quad);
 			}
@@ -356,6 +377,7 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, Chunk* negativeXNei
 
 	int mask[MAX_SLICE];
 	bool used[MAX_SLICE];
+	uint8_t light[MAX_SLICE];
 
 	for (uint8_t f = 0; f < 6; f++)
 	{
@@ -370,84 +392,94 @@ std::vector<Quad> VoxelRenderer::buildMeshData(Chunk* chunk, Chunk* negativeXNei
 		for (int n = 0; n < sizeNormal; n++)
 		{
 			for (int u = 0; u < sizeU; u++)
-				for (int v = 0; v < sizeV; v++)
-				{
-					int coordinates[3];
-					coordinates[normalAxis] = n;
-					coordinates[uAxis] = u;
-					coordinates[vAxis] = v;
+			for (int v = 0; v < sizeV; v++)
+			{
+				int coordinates[3];
+				coordinates[normalAxis] = n;
+				coordinates[uAxis] = u;
+				coordinates[vAxis] = v;
 
-					BlockType blockType = chunk->blocks[coordinates[0]][coordinates[2]][coordinates[1]];
-					int neighbourChunks[3] = {
-						coordinates[0] + cubeFacesDirections[f][0],
-						coordinates[1] + cubeFacesDirections[f][1],
-						coordinates[2] + cubeFacesDirections[f][2]
-					};
+				int blockX = coordinates[0];
+				int blockY = coordinates[1];
+				int blockZ = coordinates[2];
 
-					bool exposed;
-					if (blockType == B_WATER) {
-						exposed = chunkManager.isAir(chunk, negativeXNeighbour, positiveXNeighbour, negativeZNeighbour, positiveZNeighbour, { neighbourChunks[0], neighbourChunks[1], neighbourChunks[2] });
-					}
-					else {
-						exposed = (blockType != B_AIR)
-							&& (chunkManager.isAir(chunk, negativeXNeighbour, positiveXNeighbour, negativeZNeighbour, positiveZNeighbour, { neighbourChunks[0], neighbourChunks[1], neighbourChunks[2] })
-								|| chunkManager.isWater(chunk, negativeXNeighbour, positiveXNeighbour, negativeZNeighbour, positiveZNeighbour, { neighbourChunks[0], neighbourChunks[1], neighbourChunks[2] }));
-					}
+				BlockType blockType = chunk->blocks[blockX][blockZ][blockY];
+				int neighbourChunks[3] = {
+					blockX + cubeFacesDirections[f][0],
+					blockZ + cubeFacesDirections[f][2],
+					blockY + cubeFacesDirections[f][1]
+				};
 
-					mask[u * sizeV + v] = exposed ? (int)blockType : -1;
-					used[u * sizeV + v] = false;
+				bool exposed;
+				if (blockType == B_WATER) {
+					exposed = chunkManager.isAir(chunk, negativeXNeighbour, positiveXNeighbour, negativeZNeighbour, positiveZNeighbour, { neighbourChunks[0], neighbourChunks[2], neighbourChunks[1] });
 				}
+				else {
+					exposed = (blockType != B_AIR)
+						&& (chunkManager.isAir(chunk, negativeXNeighbour, positiveXNeighbour, negativeZNeighbour, positiveZNeighbour, { neighbourChunks[0], neighbourChunks[2], neighbourChunks[1] })
+							|| chunkManager.isWater(chunk, negativeXNeighbour, positiveXNeighbour, negativeZNeighbour, positiveZNeighbour, { neighbourChunks[0], neighbourChunks[2], neighbourChunks[1] }));
+				}
+
+				uint8_t neighbourLight = chunkManager.getNeighbourLight(chunk, negativeXNeighbour, positiveXNeighbour, negativeZNeighbour, positiveZNeighbour, { neighbourChunks[0], neighbourChunks[2], neighbourChunks[1] });
+				neighbourLight = neighbourLight < 0 ? 0 : neighbourLight;
+				mask[u * sizeV + v] = exposed ? ((int)blockType * SHADE_LEVELS + neighbourLight) : -1;
+				used[u * sizeV + v] = false;
+				light[u * sizeV + v] = neighbourLight;
+			}
 
 			for (int u = 0; u < sizeU; u++)
-				for (int v = 0; v < sizeV; v++)
+			for (int v = 0; v < sizeV; v++)
+			{
+				int index = u * sizeV + v;
+				if (used[index] || mask[index] < 0)
+					continue;
+
+				int cell = mask[index];
+				int blockType = cell / SHADE_LEVELS;
+				int skyLight = cell % SHADE_LEVELS;
+
+				int spanV = 1;
+				while (
+					v + spanV < sizeV &&
+					!used[u * sizeV + v + spanV] &&
+					mask[u * sizeV + v + spanV] == cell
+					)
+					spanV++;
+
+				int spanU = 1;
+				while (u + spanU < sizeU)
 				{
-					int index = u * sizeV + v;
-					if (used[index] || mask[index] < 0)
-						continue;
-
-					int blockType = mask[index];
-
-					int spanV = 1;
-					while (
-						v + spanV < sizeV &&
-						!used[u * sizeV + v + spanV] &&
-						mask[u * sizeV + v + spanV] == blockType
-						)
-						spanV++;
-
-					int spanU = 1;
-					while (u + spanU < sizeU)
+					bool ok = true;
+					for (int k = 0; k < spanV && ok; k++)
 					{
-						bool ok = true;
-						for (int k = 0; k < spanV && ok; k++)
-						{
-							int neighbourIndex = (u + spanU) * sizeV + v + k;
-							if (used[neighbourIndex] || mask[neighbourIndex] != blockType)
-								ok = false;
-						}
-						if (!ok)
-							break;
-						spanU++;
+						int neighbourIndex = (u + spanU) * sizeV + v + k;
+						if (used[neighbourIndex] || mask[neighbourIndex] != cell)
+							ok = false;
 					}
-
-					for (int du = 0; du < spanU; du++)
-						for (int dv = 0; dv < spanV; dv++)
-							used[(u + du) * sizeV + v + dv] = true;
-
-					uint8_t faceNormal = (n + (cubeFacesDirections[f][normalAxis] > 0 ? 1 : 0));
-
-					Quad quad = {};
-
-					quad.faceIndex = f;
-					quad.normal = faceNormal;
-					quad.uStart = u;
-					quad.vStart = v;
-					quad.uSpan = spanU;
-					quad.vSpan = spanV;
-					quad.color = chunkManager.blockProperties[blockType].faceColors[f];
-
-					chunkQuads.push_back(quad);
+					if (!ok)
+						break;
+					spanU++;
 				}
+
+				for (int du = 0; du < spanU; du++)
+				for (int dv = 0; dv < spanV; dv++)
+					used[(u + du) * sizeV + v + dv] = true;
+
+				uint8_t faceNormal = (n + (cubeFacesDirections[f][normalAxis] > 0 ? 1 : 0));
+
+				Quad quad = {};
+
+				quad.faceIndex = f;
+				quad.normal = faceNormal;
+				quad.uStart = u;
+				quad.vStart = v;
+				quad.uSpan = spanU;
+				quad.vSpan = spanV;
+				quad.color = chunkManager.BLOCK_PROPERTIES[blockType].faceColors[f];
+				quad.skyLight = light[u * sizeV + v];
+
+				chunkQuads.push_back(quad);
+			}
 		}
 	}
 

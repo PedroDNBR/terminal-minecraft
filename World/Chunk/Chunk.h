@@ -11,4 +11,7 @@ struct Chunk
 	BlockType blocks[SIZE_X][SIZE_Z][SIZE_Y];
 
 	ChunkCoord position;
+
+	uint8_t heightMap[SIZE_X][SIZE_Z];
+	uint8_t skyLight[SIZE_X][SIZE_Z][SIZE_Y];
 };

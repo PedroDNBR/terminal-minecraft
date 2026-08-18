@@ -176,6 +176,19 @@ Screenshots from the build history, in rough chronological order:
         <img width="100%" src="https://i.imgur.com/I0yFRJG.png" />
       </td>
     <tr>
+    </tr>
+    <tr>
+      <td align="center">
+        <strong>Day Light Cycle</strong><br>
+        <img width="100%" src="https://i.imgur.com/oTyXqjh.png" />
+      </td>
+      <td align="center">
+        <strong>Light flood fill</strong><br>
+        <img width="100%" src="https://i.imgur.com/fsH5ix3.png" />
+      </td>
+    </tr>
+
+    
 
     
 </table>

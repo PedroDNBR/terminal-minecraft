@@ -153,5 +153,11 @@
     <ClInclude Include="Terminal\WinWriteConsoleOutput.h">
       <Filter>Terminal</Filter>
     </ClInclude>
+    <ClInclude Include="World\Lighting.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Cube.h">
+      <Filter>World</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

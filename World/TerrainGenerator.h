@@ -6,11 +6,12 @@
 #include "Noise/NoiseCache.h"
 #include "Chunk/Chunk.h"
 #include "../Engine/Quad.h"
+class ChunkManager;
 
 class TerrainGenerator
 {
 public:
-	std::unique_ptr<Chunk> generateChunkData(ChunkCoord chunkPosition);
+	std::unique_ptr<Chunk> generateChunkData(ChunkCoord chunkPosition, ChunkManager& chunkManager);
 
 	NoiseCache buildNoiseCache(ChunkCoord chunkPosition, uint32_t seed);
 
@@ -19,7 +20,6 @@ public:
 
 	void carveWormCave(
 		Chunk* chunk,
-		int heightMap[Chunk::SIZE_X][Chunk::SIZE_Z],
 		float startX, float startY, float startZ,
 		float directionX, float directionY, float directionZ,
 		float radius, int length

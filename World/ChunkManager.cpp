@@ -1,5 +1,4 @@
 #include "ChunkManager.h"
-#include "../Terminal/Colors.h"
 
 ChunkManager::ChunkManager()
 {
@@ -28,7 +27,7 @@ std::shared_ptr<Chunk> ChunkManager::getChunkSharedPtr(ChunkCoord coord)
 
 void ChunkManager::setBlockProperties()
 {
-	blockProperties[BlockType::B_AIR] = { Color::C_BLACK, Color::C_BLACK, Color::C_BLACK, Color::C_BLACK, Color::C_BLACK, Color::C_BLACK };
+	/*blockProperties[BlockType::B_AIR] = { Color::C_BLACK, Color::C_BLACK, Color::C_BLACK, Color::C_BLACK, Color::C_BLACK, Color::C_BLACK };
 	blockProperties[BlockType::B_GRASS] = { Color::C_DIRT, Color::C_DIRT, Color::C_DIRT, Color::C_DIRT, Color::C_GRASS, Color::C_DIRT };
 	blockProperties[BlockType::B_DIRT] = { Color::C_DIRT, Color::C_DIRT, Color::C_DIRT, Color::C_DIRT, Color::C_DIRT, Color::C_DIRT };
 	blockProperties[BlockType::B_STONE] = { Color::C_STONE, Color::C_STONE, Color::C_STONE, Color::C_STONE, Color::C_STONE, Color::C_STONE };
@@ -36,7 +35,7 @@ void ChunkManager::setBlockProperties()
 	blockProperties[BlockType::B_LEAVES] = { Color::C_LEAVES, Color::C_LEAVES, Color::C_LEAVES, Color::C_LEAVES, Color::C_LEAVES, Color::C_LEAVES };
 	blockProperties[BlockType::B_WATER] = { Color::C_WATER, Color::C_WATER, Color::C_WATER, Color::C_WATER, Color::C_WATER, Color::C_WATER };
 	blockProperties[BlockType::B_SAND] = { Color::C_SAND, Color::C_SAND, Color::C_SAND, Color::C_SAND, Color::C_SAND, Color::C_SAND };
-	blockProperties[BlockType::B_CACTUS] = { Color::C_CACTUS, Color::C_CACTUS, Color::C_CACTUS, Color::C_CACTUS, Color::C_CACTUS, Color::C_CACTUS };
+	blockProperties[BlockType::B_CACTUS] = { Color::C_CACTUS, Color::C_CACTUS, Color::C_CACTUS, Color::C_CACTUS, Color::C_CACTUS, Color::C_CACTUS };*/
 }
 
 bool ChunkManager::isTransparent(Chunk* chunk, Vector3Int position)
@@ -217,6 +216,29 @@ bool ChunkManager::isAir(Chunk* chunk, Chunk* negativeXNeighbour, Chunk* positiv
 	return true;
 }
 
+uint8_t ChunkManager::getNeighbourLight(Chunk* chunk, Chunk* negativeXNeighbour, Chunk* positiveXNeighbour, Chunk* negativeZNeighbour, Chunk* positiveZNeighbour, Vector3Int position)
+{
+	if (position.y < 0 || position.y >= Chunk::SIZE_Y) return 0;
+
+	if (position.x >= 0 && position.x < Chunk::SIZE_X && position.z >= 0 && position.z < Chunk::SIZE_Z)
+		return chunk->skyLight[position.x][position.z][position.y];
+
+
+	if (position.x < 0)
+		return negativeXNeighbour == nullptr ? chunk->skyLight[0][position.z][position.y] : negativeXNeighbour->skyLight[position.x + Chunk::SIZE_X][position.z][position.y];
+
+	if (position.x >= Chunk::SIZE_X)
+		return positiveXNeighbour == nullptr ? chunk->skyLight[Chunk::SIZE_X - 1][position.z][position.y] : positiveXNeighbour->skyLight[position.x - Chunk::SIZE_X][position.z][position.y];
+
+	if (position.z < 0)
+		return negativeZNeighbour == nullptr ? chunk->skyLight[position.x][0][position.y] : negativeZNeighbour->skyLight[position.x][position.z + Chunk::SIZE_Z][position.y];
+
+	if (position.z >= Chunk::SIZE_Z)
+		return positiveZNeighbour == nullptr ? chunk->skyLight[position.x][Chunk::SIZE_Z - 1][position.y] : positiveZNeighbour->skyLight[position.x][position.z - Chunk::SIZE_Z][position.y];
+
+	return 0;
+}
+
 void ChunkManager::handleChunkLoad(const Camera& camera)
 {
 	int chunkX = (int)std::floor(
@@ -328,7 +350,7 @@ void ChunkManager::chunkLoaderWorker()
 			loadQueue.pop();
 		}
 
-		auto chunk = terrainGenerator.generateChunkData(request.coord);
+		auto chunk = terrainGenerator.generateChunkData(request.coord, *this);
 
 		{
 			std::lock_guard<std::mutex> lock(pendingMutex);

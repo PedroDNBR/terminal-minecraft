@@ -14,11 +14,12 @@ enum Color {
     C_WATER,
     C_BEDROCK,
     C_SKY,
+    C_SKY_NIGHT,
 	COLOR_MAX
 };
-
-constexpr int SHADE_LEVELS = 5;
-constexpr int MAX_COLOR_SHADED = COLOR_MAX * SHADE_LEVELS;
+    
+constexpr uint8_t SHADE_LEVELS = 8;
+constexpr uint8_t MAX_COLOR_SHADED = COLOR_MAX * SHADE_LEVELS;
 
 constexpr uint8_t colorIndex(Color color, int shade)
 {
