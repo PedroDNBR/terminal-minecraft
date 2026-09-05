@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -161,6 +161,8 @@
     <ClInclude Include="Terminal\VTOutput.h" />
     <ClInclude Include="Terminal\WinWriteConsoleOutput.h" />
     <ClInclude Include="World\ChunkManager.h" />
+    <ClInclude Include="World\Chunk\Colunm.h" />
+    <ClInclude Include="World\Chunk\ColunmGrid.h" />
     <ClInclude Include="World\Cube.h" />
     <ClInclude Include="World\Lighting.h" />
     <ClInclude Include="World\TerrainGenerator.h" />

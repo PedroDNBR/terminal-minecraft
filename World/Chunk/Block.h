@@ -1,5 +1,5 @@
 #pragma once
-enum BlockType
+enum BlockType : uint8_t
 {
 	B_AIR = 0,
 	B_GRASS,

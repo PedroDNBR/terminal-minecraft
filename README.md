@@ -187,9 +187,11 @@ Screenshots from the build history, in rough chronological order:
         <img width="100%" src="https://i.imgur.com/fsH5ix3.png" />
       </td>
     </tr>
-
-    
-
-    
+    <tr>
+      <td align="center">
+        <strong>Determinisc Oversan</strong><br>
+        <img width="100%" src="https://i.imgur.com/A10Kwqd.png" />
+      </td>
+    </tr>
 </table>
 <br/>

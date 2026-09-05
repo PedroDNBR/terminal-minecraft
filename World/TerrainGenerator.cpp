@@ -2,6 +2,7 @@
 #include "ChunkManager.h"
 #include "Noise/Noise.h"
 #include "Cube.h"
+#include "Chunk/ColunmGrid.h"
 
 std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosition, ChunkManager& chunkManager)
 {
@@ -11,210 +12,103 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 
 	NoiseCache noiseCache = buildNoiseCache(chunkPosition, seed);
 
-	bool isRockyMap[Chunk::SIZE_X][Chunk::SIZE_Z];
-
-	float temperatureMap[Chunk::SIZE_X][Chunk::SIZE_Z];
-	float humidityMap[Chunk::SIZE_X][Chunk::SIZE_Z];
-
 	const int worldOffsetX = chunkPosition.x * Chunk::SIZE_X;
 	const int worldOffsetZ = chunkPosition.z * Chunk::SIZE_Z;
 
-	for (int x = 0; x < Chunk::SIZE_X; x++)
-	for (int z = 0; z < Chunk::SIZE_Z; z++)
-	{
-		float gridX = (float)x / NoiseConstants::NOISE_STEP;
-		float gridZ = (float)z / NoiseConstants::NOISE_STEP;
-		int intX = (int)gridX;
-		int intZ = (int)gridZ;
-		float fractionX = gridX - intX;
-		float fractionZ = gridZ - intZ;
+	ColunmGrid colunms;
 
-		temperatureMap[x][z] = bilinearLerp(noiseCache.temperature, intX, intZ, fractionX, fractionZ);
-		humidityMap[x][z] = bilinearLerp(noiseCache.humidity, intX, intZ, fractionX, fractionZ);
+	for (int px = -ColunmGrid::MARGIN; px <= Chunk::SIZE_X + ColunmGrid::MARGIN; px++)
+		for (int pz = -ColunmGrid::MARGIN; pz <= Chunk::SIZE_Z + ColunmGrid::MARGIN; pz++)
+		{
+			colunms.at(px, pz) = generateColunmData({ px, pz }, noiseCache);
+		}
 
-		float continent = bilinearLerp(noiseCache.base, intX, intZ, fractionX, fractionZ);
-		float erosion = bilinearLerp(noiseCache.hills, intX, intZ, fractionX, fractionZ);
-		float peaks = bilinearLerp(noiseCache.peaks, intX, intZ, fractionX, fractionZ);
-		peaks = PEAK_SHAPE_MAX - fabsf(peaks * PEAK_SHAPE_SCALE - PEAK_SHAPE_OFFSET);
-		peaks = peaks * peaks;
+	for (int px = -ColunmGrid::MARGIN; px <= Chunk::SIZE_X + ColunmGrid::MARGIN; px++)
+		for (int pz = -ColunmGrid::MARGIN; pz <= Chunk::SIZE_Z + ColunmGrid::MARGIN; pz++)
+		{
+			int height = colunms.at(px, pz).height;
+			int heightX = colunms.at(px + 1, pz).height;
+			int heightZ = colunms.at(px, pz + 1).height;
 
-		float erosionMask = EROSION_MASK_MAX - smoothstep(erosion, EROSION_START, EROSION_END);
+			float steepness = fabsf((float)(height - heightX)) + fabsf((float)(height - heightZ));
 
-		float valleys = bilinearLerp(noiseCache.valleys, intX, intZ, fractionX, fractionZ);
-
-		float valleyEffect = (VALLEY_MIDPOINT - valleys) * VALLEY_STRENGTH;
-		if (valleyEffect < 0) valleyEffect *= NEGATIVE_VALLEY_MULTIPLIER;
-
-		float temperature = temperatureMap[x][z];
-
-		float relief = peaks * EROSION_PEAKS_MAX * erosionMask
-			+ (EROSION_MASK_MAX - erosionMask) * PEAK_SHAPE_SCALE
-			+ valleyEffect * VALLEY_SCALE;
-
-		float reliefFactor = 1.0f - temperature * DESERT_FLATTEN;
-
-		float biomeElevation = (temperature < 0.5f) ? (0.5f - temperature) * BIOME_ELEVATION : 0.0f;
-
-		float heightFinal = BASE_TERRAIN_HEIGHT
-			+ continent * CONTINENT_ELEVATION_MAX
-			+ relief * reliefFactor
-			+ biomeElevation;
-
-		heightFinal += OFFSET_ROUND;
-
-		if(heightFinal < 1)
-			heightFinal = 1;
-		
-		if(heightFinal > Chunk::SIZE_Y - 1)
-			heightFinal = Chunk::SIZE_Y - 1;
-
-		chunk->heightMap[x][z] = (int)heightFinal + OFFSET_ROUND;
-		isRockyMap[x][z] = (chunk->heightMap[x][z] > 48);
-	}
-
-	for (int x = 0; x < Chunk::SIZE_X; x++)
-	for (int z = 0; z < Chunk::SIZE_Z; z++)
-	{
-		int height = chunk->heightMap[x][z];
-		int heightX = chunk->heightMap[x < Chunk::SIZE_X - 1 ? x + 1 : x][z];
-		int heightZ = chunk->heightMap[x][z < Chunk::SIZE_Z - 1 ? z + 1 : z];
-
-		float steepness = fabsf((float)(height - heightX)) + fabsf((float)(height - heightZ));
-		isRockyMap[x][z] = (height > 58) || (height > 50 && steepness > .6f);
-	}
-
+			colunms.at(px, pz).isRocky = (height > ROCK_MIN_HEIGHT) || (height > ROCK_SLOPE_MIN_HEIGHT && steepness > ROCKY_MIN_STEEPNESS);
+		}
 	float caveGrid[NoiseConstants::CAVE_GRID_X][NoiseConstants::CAVE_GRID_Z][NoiseConstants::CAVE_GRID_Y];
 
 	for (int x = 0; x < NoiseConstants::CAVE_GRID_X; x++)
-	for (int z = 0; z < NoiseConstants::CAVE_GRID_Z; z++)
-	for (int y = 0; y < NoiseConstants::CAVE_GRID_Y; y++)
-	{
-		int worldX = worldOffsetX + x * NoiseConstants::CAVE_STEP;
-		int worldY = y * NoiseConstants::CAVE_STEP;
-		int worldZ = worldOffsetZ + z * NoiseConstants::CAVE_STEP;
+		for (int z = 0; z < NoiseConstants::CAVE_GRID_Z; z++)
+			for (int y = 0; y < NoiseConstants::CAVE_GRID_Y; y++)
+			{
+				int worldX = worldOffsetX + x * NoiseConstants::CAVE_STEP;
+				int worldY = y * NoiseConstants::CAVE_STEP;
+				int worldZ = worldOffsetZ + z * NoiseConstants::CAVE_STEP;
 
-		float n1 = valueNoise3D(worldX, worldY, worldZ, int(seed * .5f));
-		float n2 = valueNoise3D(worldX + 47, worldY + 31, worldZ + 83, seed * 2);
-		caveGrid[x][z][y] = fabsf(n1 - 0.5f) + fabsf(n2 - 0.5f);
-	}
+				float n1 = valueNoise3D(worldX, worldY, worldZ, int(seed * .5f));
+				float n2 = valueNoise3D(worldX + 47, worldY + 31, worldZ + 83, seed * 2);
+				caveGrid[x][z][y] = fabsf(n1 - 0.5f) + fabsf(n2 - 0.5f);
+			}
 
 	for (int x = 0; x < Chunk::SIZE_X; x++)
 		for (int z = 0; z < Chunk::SIZE_Z; z++)
 		{
-			int height = chunk->heightMap[x][z];
-			bool isRocky = isRockyMap[x][z];
-			float temperature = temperatureMap[x][z];
-			float humidity = humidityMap[x][z];
+			const Colunm& colunm = colunms.at(x, z);
+			chunk->heightMap[x][z] = colunm.height;
 
-			for (int y = 0; y <= height; y++)
-			{
-				BlockType blockType;
-				if (y == height)
-				{
-					if (temperature > 0.55f && humidity < 0.4f)
-						blockType = B_SAND;
-					else if (temperature < 0.3f && humidity < 0.4f)
-						blockType = B_STONE;
-					else if (humidity > 0.6f && !isRocky)
-						blockType = B_GRASS;
-					else
-						blockType = B_GRASS;
-				}
-				else if (y < height && y > height - 4)
-					if (temperature > 0.55f && humidity < 0.4f)
-						blockType = B_SAND;
-					else if (temperature < 0.3f && humidity < 0.4f)
-						blockType = B_STONE;
-					else
-						blockType = B_DIRT;
-
-				else if (y == 0)
-					blockType = B_BEDROCK;
-				else
-					blockType = B_STONE;
-
-				chunk->blocks[x][z][y] = blockType;
-			}
-
-			if (height < SEA_LEVEL)
-			{
-				bool dryBiome = temperature > 0.55f && humidity < 0.4f;
-				if (!dryBiome)
-				{
-					for (int y = height + 1; y <= SEA_LEVEL; y++)
-						chunk->blocks[x][z][y] = B_WATER;
-					chunk->blocks[x][z][height] = B_SAND;
-					if (height > 0) chunk->blocks[x][z][height - 1] = B_SAND;
-				}
-			}
-
-			if (
-				height >= SEA_LEVEL && height <= SEA_LEVEL + 1 &&
-				chunk->blocks[x][z][height] == B_GRASS
-				)
-				chunk->blocks[x][z][height] = B_SAND;
-
-			int caveTop = height - 2;
-			if (caveTop <= 1) continue;
-
+			for (int y = 0; y <= colunm.height; y++)
+				chunk->blocks[x][z][y] = surfaceBlockType(y, colunm);
 		}
 
 	for (int x = 0; x < Chunk::SIZE_X; x++)
-	for (int z = 0; z < Chunk::SIZE_Z; z++)
-	{
-		if (
-			isRockyMap[x][z] ||
-			chunk->blocks[x][z][chunk->heightMap[x][z]] == B_STONE
-			)
-			continue;
-
-		int surfaceY = chunk->heightMap[x][z];
-
-		if (surfaceY <= SEA_LEVEL)
-			continue;
-
-		float gridX = (float)x / NoiseConstants::NOISE_STEP;
-		float gridZ = (float)z / NoiseConstants::NOISE_STEP;
-		int intX = (int)gridX;
-		int intZ = (int)gridZ;
-		float fractionX = gridX - intX;
-		float fractionZ = gridZ - intZ;
-
-		float forestDensity = bilinearLerp(noiseCache.forest, intX, intZ, fractionX, fractionZ);
-
-		bool isDesert = (temperatureMap[x][z] > 0.55f && humidityMap[x][z] < 0.4f);
-
-		unsigned hash = (unsigned)(
-			(unsigned)(worldOffsetX + x) * 73856093u ^
-			(unsigned)(worldOffsetZ + z) * 19349663u ^
-			seed
-			);
-
-		if (isDesert)
+		for (int z = 0; z < Chunk::SIZE_Z; z++)
 		{
-			if (chunk->blocks[x][z][surfaceY] != B_SAND)
+			const Colunm& colunm = colunms.at(x, z);
+			int height = colunm.height;
+			if (height >= SEA_LEVEL || isDryBiome(colunm))
 				continue;
 
-			if (forestDensity < .70f)
+			for (int y = height + 1; y <= SEA_LEVEL; y++)
+				chunk->blocks[x][z][y] = B_WATER;
+
+			chunk->blocks[x][z][height] = B_SAND;
+
+			if(height > 0)
+				chunk->blocks[x][z][height - 1] = B_SAND;
+	}
+
+	for (int px = -ColunmGrid::MARGIN; px <= Chunk::SIZE_X + ColunmGrid::MARGIN; px++)
+	for (int pz = -ColunmGrid::MARGIN; pz <= Chunk::SIZE_Z + ColunmGrid::MARGIN; pz++)
+	{
+		const Colunm& colunm = colunms.at(px, pz);
+		if (colunm.isRocky)
+			continue;
+		if(colunm.height <= SEA_LEVEL)
+			continue;
+
+		BlockType surface = surfaceBlockType(colunm.height, colunm);
+		const int worldX = worldOffsetX + px;
+		const int worldZ = worldOffsetZ + pz;
+
+		unsigned hash = featureOriginHash(worldX, worldZ, seed);
+
+		if (isDryBiome(colunm))
+		{
+			if (
+				surface != B_SAND || 
+				colunm.forest <= MIN_CACTUS_DENSITY || 
+				(hash % CACTUS_PLACEMENT_OFFSET) != 0)
 				continue;
 
-			if ((hash % 350) != 0)
-				continue;
-
-			placeCactus(chunk.get(), x, surfaceY, z);
+			placeCactus(chunk.get(), px, colunm.height, pz, worldX, worldZ);
 		}
 		else
 		{
-			if (chunk->blocks[x][z][surfaceY] != B_GRASS)
+			if (
+				surface != B_GRASS || 
+				colunm.forest < MIN_FOREST_DENSITY || 
+				(hash % FOREST_TREE_PLACEMENT_OFFSET) != 0)
 				continue;
-
-			if (forestDensity < MIN_FOREST_DENSITY)
-				continue;
-
-			if ((hash % FOREST_TREE_PLACEMENT_OFFSET) != 0)
-				continue;
-
-			placeTree(chunk.get(), x, surfaceY, z);
+			placeTree(chunk.get(), px, colunm.height, pz, worldX, worldZ);
 		}
 	}
 
@@ -327,42 +221,152 @@ NoiseCache TerrainGenerator::buildNoiseCache(ChunkCoord chunkPosition, uint32_t 
 {
 	NoiseCache noiseCache;
 
-	for (int gx = 0; gx < NoiseConstants::NOISE_GRID; gx++)
-		for (int gz = 0; gz < NoiseConstants::NOISE_GRID; gz++)
-		{
-			float worldX = (float)(chunkPosition.x * Chunk::SIZE_X + gx * NoiseConstants::NOISE_STEP);
-			float worldZ = (float)(chunkPosition.z * Chunk::SIZE_Z + gz * NoiseConstants::NOISE_STEP);
+	for (int gx = 0; gx < NoiseConstants::NOISE_GRID_PADDED; gx++)
+	for (int gz = 0; gz < NoiseConstants::NOISE_GRID_PADDED; gz++)
+	{
+		const int latticeX = gx - NoiseConstants::NOISE_MARGIN;
+		const int latticeZ = gz - NoiseConstants::NOISE_MARGIN;
 
-			float warpedX = smoothNoise(worldX * NoiseConstants::WARP_FREQUENCY, worldZ * NoiseConstants::WARP_FREQUENCY, seed + 11111u);
-			float warpedZ = smoothNoise(worldX * NoiseConstants::WARP_FREQUENCY, worldZ * NoiseConstants::WARP_FREQUENCY, seed + 22222u);
+		float worldX = (float)(chunkPosition.x * Chunk::SIZE_X + latticeX * NoiseConstants::NOISE_STEP);
+		float worldZ = (float)(chunkPosition.z * Chunk::SIZE_Z + latticeZ * NoiseConstants::NOISE_STEP);
 
-			noiseCache.temperature[gx][gz] = smoothNoise(worldX * NoiseConstants::BIOME_FREQUENCY, worldZ * NoiseConstants::BIOME_FREQUENCY, seed + 99991u);
-			noiseCache.humidity[gx][gz] = smoothNoise(worldX * NoiseConstants::BIOME_FREQUENCY, worldZ * NoiseConstants::BIOME_FREQUENCY, seed + 88881u);
+		float warpedX = smoothNoise(worldX * NoiseConstants::WARP_FREQUENCY, worldZ * NoiseConstants::WARP_FREQUENCY, seed + 11111u);
+		float warpedZ = smoothNoise(worldX * NoiseConstants::WARP_FREQUENCY, worldZ * NoiseConstants::WARP_FREQUENCY, seed + 22222u);
 
-			noiseCache.base[gx][gz] = smoothNoise((worldX + warpedX * 30.0f) * NoiseConstants::BASE_FREQUENCY, (worldZ + warpedZ * 30.0f) * NoiseConstants::BASE_FREQUENCY, seed + 1u);
-			noiseCache.hills[gx][gz] = fractalNoise(worldX * NoiseConstants::HILLS_FREQUENCY, worldZ * NoiseConstants::HILLS_FREQUENCY, seed + 2u);
-			noiseCache.peaks[gx][gz] = smoothNoise(worldX * NoiseConstants::PEAKS_FREQUENCY, worldZ * NoiseConstants::PEAKS_FREQUENCY, seed + 3u);
-			noiseCache.valleys[gx][gz] = smoothNoise(worldX * NoiseConstants::VALLEYS_FREQUENCY, worldZ * NoiseConstants::VALLEYS_FREQUENCY, seed + 777u);
-			noiseCache.forest[gx][gz] = smoothNoise(worldX * NoiseConstants::FOREST_FREQUENCY, worldZ * NoiseConstants::FOREST_FREQUENCY, seed + 5555u);
-		}
+		noiseCache.temperature[gx][gz] = smoothNoise(worldX * NoiseConstants::BIOME_FREQUENCY, worldZ * NoiseConstants::BIOME_FREQUENCY, seed + 99991u);
+		noiseCache.humidity[gx][gz] = smoothNoise(worldX * NoiseConstants::BIOME_FREQUENCY, worldZ * NoiseConstants::BIOME_FREQUENCY, seed + 88881u);
+
+		noiseCache.base[gx][gz] = smoothNoise((worldX + warpedX * 30.0f) * NoiseConstants::BASE_FREQUENCY, (worldZ + warpedZ * 30.0f) * NoiseConstants::BASE_FREQUENCY, seed + 1u);
+		noiseCache.hills[gx][gz] = fractalNoise(worldX * NoiseConstants::HILLS_FREQUENCY, worldZ * NoiseConstants::HILLS_FREQUENCY, seed + 2u);
+		noiseCache.peaks[gx][gz] = smoothNoise(worldX * NoiseConstants::PEAKS_FREQUENCY, worldZ * NoiseConstants::PEAKS_FREQUENCY, seed + 3u);
+		noiseCache.valleys[gx][gz] = smoothNoise(worldX * NoiseConstants::VALLEYS_FREQUENCY, worldZ * NoiseConstants::VALLEYS_FREQUENCY, seed + 777u);
+		noiseCache.forest[gx][gz] = smoothNoise(worldX * NoiseConstants::FOREST_FREQUENCY, worldZ * NoiseConstants::FOREST_FREQUENCY, seed + 5555u);
+	}
 
 	return noiseCache;
 }
 
-void TerrainGenerator::placeTree(Chunk* chunk, int x, int baseY, int z)
+Colunm TerrainGenerator::generateColunmData(ChunkCoord localPosition, const NoiseCache& noiseCache)
 {
-	unsigned hash = (unsigned)(x * 1619 + z * 31337 + baseY * 997);
+	float gridX = (float)localPosition.x / NoiseConstants::NOISE_STEP;
+	float gridZ = (float)localPosition.z / NoiseConstants::NOISE_STEP;
+
+	int intX = (int)floorf(gridX);
+	int intZ = (int)floorf(gridZ);
+	float fractionX = gridX - intX;
+	float fractionZ = gridZ - intZ;
+
+	float temperature = bilinearLerp(noiseCache.temperature, intX, intZ, fractionX, fractionZ);
+	float humidity = bilinearLerp(noiseCache.humidity, intX, intZ, fractionX, fractionZ);
+	float forest = bilinearLerp(noiseCache.forest, intX, intZ, fractionX, fractionZ);
+
+	float continent = bilinearLerp(noiseCache.base, intX, intZ, fractionX, fractionZ);
+	float erosion = bilinearLerp(noiseCache.hills, intX, intZ, fractionX, fractionZ);
+	float peaks = bilinearLerp(noiseCache.peaks, intX, intZ, fractionX, fractionZ);
+	peaks = PEAK_SHAPE_MAX - fabsf(peaks * PEAK_SHAPE_SCALE - PEAK_SHAPE_OFFSET);
+	peaks = peaks * peaks;
+
+	float erosionMask = EROSION_MASK_MAX - smoothstep(erosion, EROSION_START, EROSION_END);
+
+	float valleys = bilinearLerp(noiseCache.valleys, intX, intZ, fractionX, fractionZ);
+
+	float valleyEffect = (VALLEY_MIDPOINT - valleys) * VALLEY_STRENGTH;
+	if (valleyEffect < 0) valleyEffect *= NEGATIVE_VALLEY_MULTIPLIER;
+
+	float relief = peaks * EROSION_PEAKS_MAX * erosionMask
+		+ (EROSION_MASK_MAX - erosionMask) * PEAK_SHAPE_SCALE
+		+ valleyEffect * VALLEY_SCALE;
+
+	float reliefFactor = 1.0f - temperature * DESERT_FLATTEN;
+
+	float biomeElevation = (temperature < 0.5f) ? (0.5f - temperature) * BIOME_ELEVATION : 0.0f;
+
+	float heightFinal = BASE_TERRAIN_HEIGHT
+		+ continent * CONTINENT_ELEVATION_MAX
+		+ relief * reliefFactor
+		+ biomeElevation;
+
+	heightFinal += OFFSET_ROUND;
+
+	int height = (int)(heightFinal + OFFSET_ROUND);
+
+	if(height < 1)
+		height = 1;
+	else if(height > Chunk::SIZE_Y - 1)
+		height = Chunk::SIZE_Y - 1;
+
+	return {
+		(uint8_t)height, temperature, humidity, forest, false
+	};
+}
+
+BlockType TerrainGenerator::surfaceBlockType(int y, const Colunm& colunm)
+{
+	BlockType blockType = B_AIR;
+
+	if (y == colunm.height)
+	{
+		if (isDryBiome(colunm))
+			blockType = B_SAND;
+		else if (colunm.temperature < 0.3f && colunm.humidity < 0.4f)
+			blockType = B_STONE;
+		else if (colunm.isRocky)
+			blockType = B_STONE;
+		else
+			blockType = B_GRASS;
+	}
+	else if (y < colunm.height && y > colunm.height - 4)
+	{
+		if (isDryBiome(colunm))
+			blockType = B_SAND;
+		else if (colunm.temperature < 0.3f && colunm.humidity < 0.4f)
+			blockType = B_STONE;
+		else if (colunm.isRocky)
+			blockType = B_STONE;
+		else
+			blockType = B_DIRT;
+	}
+	else if ( y == 0)
+		blockType = B_BEDROCK;
+	else
+		blockType = B_STONE;
+
+	if(colunm.height >= SEA_LEVEL && colunm.height <= SEA_LEVEL + 1 && y == colunm.height && blockType == B_GRASS)
+		blockType = B_SAND;
+
+	return blockType;
+}
+
+BlockType TerrainGenerator::blockAt(Chunk* chunk, int localX, int localY, int localZ)
+{
+	if (localX < 0 || localX >= Chunk::SIZE_X) return B_AIR;
+	if (localZ < 0 || localZ >= Chunk::SIZE_Z) return B_AIR;
+	if (localY < 0 || localY >= Chunk::SIZE_Y) return B_AIR;
+	return chunk->blocks[localX][localZ][localY];
+}
+
+void TerrainGenerator::stampBlock(Chunk* chunk, int lx, int ly, int lz, BlockType blockType)
+{
+	if (lx < 0 || lx >= Chunk::SIZE_X) return;
+	if (ly < 0 || ly >= Chunk::SIZE_Y) return;
+	if (lz < 0 || lz >= Chunk::SIZE_Z) return;
+
+	chunk->blocks[lx][lz][ly] = blockType;
+}
+
+unsigned TerrainGenerator::featureOriginHash(int worldX, int worldZ, unsigned seed)
+{
+	return (unsigned)worldX * 73856093u ^ (unsigned)worldZ * 19349663u ^ seed;
+}
+
+void TerrainGenerator::placeTree(Chunk* chunk, int localX, int baseY, int localZ, int worldX, int worldZ)
+{
+	unsigned hash = featureShapeHash(worldX, worldZ, baseY);
 
 	int trunkHeight = TREE_TRUNK_BASE_HEIGHT + (int)(hash % 3);
 
 	for (int y = 1; y <= trunkHeight; y++)
-	{
-		int trunkY = baseY + y;
-		if (trunkY >= Chunk::SIZE_Y)
-			break;
-
-		chunk->blocks[x][z][trunkY] = B_LOG;
-	}
+		stampBlock(chunk, localX, baseY + y, localZ, B_LOG);
 
 	int topY = baseY + trunkHeight;
 
@@ -377,38 +381,34 @@ void TerrainGenerator::placeTree(Chunk* chunk, int x, int baseY, int z)
 				if (elipseX * elipseX + elipseY * elipseY + elipseZ * elipseZ > 1.0f)
 					continue;
 
-				int targetX = x + deltaX;
+				int targetX = localX + deltaX;
 				int targetY = topY + deltaY;
-				int targetZ = z + deltaZ;
+				int targetZ = localZ + deltaZ;
 
-				if (targetX < 0 || targetX >= Chunk::SIZE_X)
-					continue;
-				if (targetY < 0 || targetY >= Chunk::SIZE_Y)
-					continue;
-				if (targetZ < 0 || targetZ >= Chunk::SIZE_Z)
+				if (blockAt(chunk, targetX, targetY, targetZ) == B_LOG)
 					continue;
 
-				if (chunk->blocks[targetX][targetZ][targetY] == B_LOG)
-					continue;
-
-				chunk->blocks[targetX][targetZ][targetY] = B_LEAVES;
+				stampBlock(chunk, targetX, targetY, targetZ, B_LEAVES);
 			}
 }
 
-void TerrainGenerator::placeCactus(Chunk* chunk, int x, int baseY, int z)
+void TerrainGenerator::placeCactus(Chunk* chunk, int localX, int baseY, int localZ, int worldX, int worldZ)
 {
-	unsigned hash = (unsigned)(x * 1619 + z * 31337 + baseY * 997);
+	unsigned hash = featureShapeHash(worldX, worldZ, baseY);
 
 	int trunkHeight = CACTUS_TRUNK_BASE_HEIGHT + (int)(hash % 3);
 
 	for (int y = 1; y <= trunkHeight; y++)
-	{
-		int trunkY = baseY + y;
-		if (trunkY >= Chunk::SIZE_Y)
-			break;
+		stampBlock(chunk, localX, baseY + y, localZ, B_CACTUS);
+}
 
-		chunk->blocks[x][z][trunkY] = B_CACTUS;
-	}
+unsigned TerrainGenerator::featureShapeHash(int worldX, int worldZ, int baseY)
+{
+	unsigned hash = (unsigned)(worldX * 1619 + worldZ * 31337 + baseY * 997);
+	hash ^= hash >> 13;
+	hash *= 2246822519u;
+	hash ^= hash >> 16;
+	return hash;
 }
 
 void TerrainGenerator::carveWormCave(Chunk* chunk, float startX, float startY, float startZ, float directionX, float directionY, float directionZ, float radius, int length)
@@ -465,13 +465,21 @@ void TerrainGenerator::carveWormCave(Chunk* chunk, float startX, float startY, f
 	}
 }
 
-float TerrainGenerator::bilinearLerp(float grid[NoiseConstants::NOISE_GRID][NoiseConstants::NOISE_GRID],
+float TerrainGenerator::bilinearLerp(const float grid[NoiseConstants::NOISE_GRID_PADDED][NoiseConstants::NOISE_GRID_PADDED],
 	int intX, int intZ, float fractionX, float fractionZ)
 {
+	const int gridX = intX + NoiseConstants::NOISE_MARGIN;
+	const int gridZ = intZ + NoiseConstants::NOISE_MARGIN;
+
 	fractionX = fractionX * fractionX * (3.0f - 2.0f * fractionX);
 	fractionZ = fractionZ * fractionZ * (3.0f - 2.0f * fractionZ);
-	return grid[intX][intZ] * (1 - fractionX) * (1 - fractionZ) +
-		grid[intX + 1][intZ] * fractionX * (1 - fractionZ) + 
-		grid[intX][intZ + 1] * (1 - fractionX) * fractionZ + 
-		grid[intX + 1][intZ + 1] * fractionX * fractionZ;
+	return grid[gridX][gridZ] * (1 - fractionX) * (1 - fractionZ) +
+		grid[gridX + 1][gridZ] * fractionX * (1 - fractionZ) + 
+		grid[gridX][gridZ + 1] * (1 - fractionX) * fractionZ + 
+		grid[gridX + 1][gridZ + 1] * fractionX * fractionZ;
+}
+
+bool TerrainGenerator::isDryBiome(const Colunm& colunm)
+{
+	return colunm.temperature > 0.55f && colunm.humidity < 0.4f;
 }

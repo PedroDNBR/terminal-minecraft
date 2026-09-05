@@ -6,6 +6,7 @@
 #include "Noise/NoiseCache.h"
 #include "Chunk/Chunk.h"
 #include "../Engine/Quad.h"
+#include "Chunk/Colunm.h"
 class ChunkManager;
 
 class TerrainGenerator
@@ -15,8 +16,18 @@ public:
 
 	NoiseCache buildNoiseCache(ChunkCoord chunkPosition, uint32_t seed);
 
-	void placeTree(Chunk* chunk, int x, int baseY, int z);
-	void placeCactus(Chunk* chunk, int x, int baseY, int z);
+	Colunm generateColunmData(ChunkCoord localPosition, const NoiseCache& noiseCache);
+
+	BlockType surfaceBlockType(int y, const Colunm& colunm);
+
+	static BlockType blockAt(Chunk* chunk, int localX, int localY, int localZ);
+
+	static void stampBlock(Chunk* chunk, int localX, int localY, int localZ, BlockType blockType);
+	static unsigned featureOriginHash(int worldX, int worldZ, unsigned seed);
+	static unsigned featureShapeHash(int worldX, int worldZ, int baseY);
+
+	void placeTree(Chunk* chunk, int localX, int baseY, int localZ, int worldX, int worldZ);
+	void placeCactus(Chunk* chunk, int localX, int baseY, int localZ, int worldX, int worldZ);
 
 	void carveWormCave(
 		Chunk* chunk,
@@ -25,8 +36,10 @@ public:
 		float radius, int length
 	);
 
-	float bilinearLerp(float grid[NoiseConstants::NOISE_GRID][NoiseConstants::NOISE_GRID],
+	float bilinearLerp(const float grid[NoiseConstants::NOISE_GRID_PADDED][NoiseConstants::NOISE_GRID_PADDED],
 		int intX, int intZ, float fractionX, float fractionZ);
+
+	bool isDryBiome(const Colunm& colunm);
 
 	int seed = 421894;
 	static constexpr int BASE_TERRAIN_HEIGHT = 26;
@@ -68,9 +81,12 @@ public:
 	static constexpr int TREE_TRUNK_LEAVES_XZ_RADIUS = 2;
 	static constexpr int TREE_TRUNK_LEAVES_Y_RADIUS = 2;
 
+	static constexpr float MIN_CACTUS_DENSITY = 0.7f;
+	static constexpr int CACTUS_PLACEMENT_OFFSET = 350;
 	static constexpr int CACTUS_TRUNK_BASE_HEIGHT = 3;
 
-
-
+	static constexpr int ROCK_MIN_HEIGHT = 58;
+	static constexpr int ROCK_SLOPE_MIN_HEIGHT = 50;
+	static constexpr float ROCKY_MIN_STEEPNESS = 0.6f;
 };
 
