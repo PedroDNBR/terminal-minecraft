@@ -112,44 +112,37 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		}
 	}
 
-	unsigned wormHash = (unsigned)(worldOffsetX) * 73856093u ^
-		(unsigned)(worldOffsetZ) * 19349663u ^
-		((unsigned)seed * 2654435761u);
-
-	wormHash = wormHash >> 15;
-	wormHash *= 2246822519u;
-	wormHash ^= wormHash >> 13;
-
-	int wormCount = (wormHash % WORM_CAVE_FREQUENCY);
-
-	for (int w = 0; w < wormCount; w++)
+	for (int ocx = -3; ocx <= 3; ocx++)
+	for (int ocz = -3; ocz <= 3; ocz++)
 	{
-		unsigned h = (wormHash + w * 0x9E3779B9u) * 2654435761u;
-		h ^= h >> 16;
+		ChunkCoord neighbourChunkPosition = { chunkPosition.x + ocx, chunkPosition.z + ocz };
+		unsigned wormHash = featureWormHash(neighbourChunkPosition.x * Chunk::SIZE_X, neighbourChunkPosition.z * Chunk::SIZE_Z, seed);
+		int wormCount = (wormHash % WORM_CAVE_FREQUENCY);
 
-		unsigned bitsStartX = h & 0xF;
-		unsigned bitsStartZ = (h >> 4) & 0xF;
-		unsigned bitsY = (h >> 8) & 0x3F;
-		unsigned bitsAngle = (h >> 14) & 0x3FF;
-		unsigned bitsDirectionY = (h >> 24) & 0x7F;
+		for (int w = 0; w < wormCount; w++)
+		{
+			unsigned h = (wormHash + w * 0x9E3779B9u) * 2654435761u;
+			h ^= h >> 16;
 
-		int sx = (int)bitsStartX;
-		int sz = (int)bitsStartZ;
+			unsigned bitsStartX = h & 0xF;
+			unsigned bitsStartZ = (h >> 4) & 0xF;
+			unsigned bitsY = (h >> 8) % (40 - 4);
+			unsigned bitsAngle = (h >> 14) & 0x3FF;
+			unsigned bitsDirectionY = (h >> 24) & 0x7F;
 
-		int columnHeight = chunk->heightMap[sx][sz];
-		if (columnHeight < 8) continue;
+			float startWorldX = (float)(neighbourChunkPosition.x * Chunk::SIZE_X + (int)bitsStartX);
+			float startWorldZ = (float)(neighbourChunkPosition.z * Chunk::SIZE_Z + (int)bitsStartZ);
+			float startY = 4 + bitsY;
 
-		float startX = (float)sx;
-		float startZ = (float)sz;
-		float startY = (float)(4 + bitsY % (columnHeight + 3));
+			float angle = (float)bitsAngle / 1024.0f * 6.2831853f;
 
-		float angle = (float)bitsAngle / 1024.0f * 6.2831853f;
+			float directionX = cosf(angle);
+			float directionZ = sinf(angle);
+			float directionY = -0.4f + (float)bitsDirectionY / 128.0f * 0.8f;
 
-		float directionX = cosf(angle);
-		float directionZ = sinf(angle);
-		float directionY = -0.4f + (float)bitsDirectionY / 128.0f * 0.8f;
-
-		carveWormCave(chunk.get(), startX, startY, startZ, directionX, directionY, directionZ, WORM_CAVE_RADIUS, WORM_CAVE_LENGTH);
+			carveWormCave(chunk.get(), worldOffsetX, worldOffsetZ, startWorldX, startWorldZ, startY, directionX, directionY, directionZ, WORM_CAVE_RADIUS, WORM_CAVE_LENGTH);
+		}
+		
 	}
 
 	for (int x = 0; x < Chunk::SIZE_X; x++)
@@ -411,14 +404,26 @@ unsigned TerrainGenerator::featureShapeHash(int worldX, int worldZ, int baseY)
 	return hash;
 }
 
-void TerrainGenerator::carveWormCave(Chunk* chunk, float startX, float startY, float startZ, float directionX, float directionY, float directionZ, float radius, int length)
+unsigned TerrainGenerator::featureWormHash(int worldX, int worldZ, unsigned seed)
+{
+	unsigned wormHash = (unsigned)(worldX) * 73856093u ^
+		(unsigned)(worldZ) * 19349663u ^
+		((unsigned)seed * 2654435761u);
+
+	wormHash = wormHash >> 15;
+	wormHash *= 2246822519u;
+	wormHash ^= wormHash >> 13;
+	return wormHash;
+}
+
+void TerrainGenerator::carveWormCave(Chunk* chunk, int worldOffsetX, int worldOffsetZ, float startWorldX, float startWorldZ, float startY, float directionX, float directionY, float directionZ, float radius, int length)
 {
 	for (int step = 0; step < length; step++)
 	{
 		float t = (float)step / length;
-		directionX += smoothNoise(startX * 0.1f + t, startZ * 0.1f, seed + 1) * 0.4f - 0.2f;
-		directionY += smoothNoise(startX * 0.1f, startZ * 0.1f + t, seed + 2) * 0.2f - 0.1f;
-		directionZ += smoothNoise(startZ * 0.1f + t, startY * 0.1f, seed + 3) * 0.4f - 0.2f;
+		directionX += smoothNoise(startWorldX * 0.1f + t, startWorldZ * 0.1f, seed + 1) * 0.4f - 0.2f;
+		directionY += smoothNoise(startWorldX * 0.1f, startWorldZ * 0.1f + t, seed + 2) * 0.2f - 0.1f;
+		directionZ += smoothNoise(startWorldZ * 0.1f + t, startY * 0.1f, seed + 3) * 0.4f - 0.2f;
 
 		float newWormLenght = sqrtf(directionX * directionX + directionY * directionY + directionZ * directionZ);
 
@@ -429,38 +434,34 @@ void TerrainGenerator::carveWormCave(Chunk* chunk, float startX, float startY, f
 		directionY /= newWormLenght;
 		directionZ /= newWormLenght;
 
-		startX += directionX;
+		startWorldX += directionX;
 		startY += directionY;
-		startZ += directionZ;
-
-		int caveX = (int)startX;
-		int caveY = (int)startY;
-		int caveZ = (int)startZ;
+		startWorldZ += directionZ;
 		int r = (int)radius;
 
 		for (int deltaX = -r; deltaX <= r; deltaX++)
-			for (int deltaY = -r; deltaY <= r; deltaY++)
-				for (int deltaZ = -r; deltaZ <= r; deltaZ++)
-				{
-					if (deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > r * r)
-						continue;
-
-					int bx = caveX + deltaX;
-					int by = caveY + deltaY;
-					int bz = caveZ + deltaZ;
-
-					if (bx < 0 || bx >= Chunk::SIZE_X)
-						continue;
-					if (bz < 0 || bz >= Chunk::SIZE_Z)
-						continue;
-					if (by < 1)
-						continue;
-					if (by >= chunk->heightMap[bx][bz] - 2)
-						continue;
-					if (chunk->blocks[bx][bz][by] == B_WATER)
+		for (int deltaY = -r; deltaY <= r; deltaY++)
+		for (int deltaZ = -r; deltaZ <= r; deltaZ++)
+		{
+			if (deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ > r * r)
 				continue;
 
-			chunk->blocks[bx][bz][by] = B_AIR;
+			int worldBX = (int)floorf(startWorldX) + deltaX;
+			int worldBZ = (int)floorf(startWorldZ) + deltaZ;
+			int bx = worldBX - worldOffsetX;
+			int bz = worldBZ - worldOffsetZ;
+			int by = (int)floorf(startY) + deltaY;
+
+			if (bx < 0 || bx >= Chunk::SIZE_X)
+				continue;
+			if (bz < 0 || bz >= Chunk::SIZE_Z)
+				continue;
+			if (by < 1)
+				continue;
+			if (by >= chunk->heightMap[bx][bz] - 2)
+				continue;
+
+			stampBlock(chunk, bx, by, bz, B_AIR);
 		}
 	}
 }

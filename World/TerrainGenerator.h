@@ -25,15 +25,23 @@ public:
 	static void stampBlock(Chunk* chunk, int localX, int localY, int localZ, BlockType blockType);
 	static unsigned featureOriginHash(int worldX, int worldZ, unsigned seed);
 	static unsigned featureShapeHash(int worldX, int worldZ, int baseY);
+	static unsigned featureWormHash(int worldX, int worldZ, unsigned seed);
 
 	void placeTree(Chunk* chunk, int localX, int baseY, int localZ, int worldX, int worldZ);
 	void placeCactus(Chunk* chunk, int localX, int baseY, int localZ, int worldX, int worldZ);
 
 	void carveWormCave(
 		Chunk* chunk,
-		float startX, float startY, float startZ,
-		float directionX, float directionY, float directionZ,
-		float radius, int length
+		int worldOffsetX,
+		int worldOffsetZ,
+		float startWorldX,
+		float startWorldZ,
+		float startY,
+		float directionX,
+		float directionY,
+		float directionZ,
+		float radius,
+		int length
 	);
 
 	float bilinearLerp(const float grid[NoiseConstants::NOISE_GRID_PADDED][NoiseConstants::NOISE_GRID_PADDED],

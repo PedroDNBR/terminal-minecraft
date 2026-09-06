@@ -166,6 +166,7 @@ int main()
 		renderer.queueText(2, 2, "pending: " + std::to_string(chunkManager.pendingCoords.size()), C_WHITE);
 		renderer.queueText(2, 3, "meshingQueue: " + std::to_string(chunkManager.meshingQueue.size()), C_WHITE);
 		renderer.queueText(2, 4, "chunksMeshesByPosition: " + std::to_string(voxelRenderer.chunksMeshesByPosition.size()), C_WHITE);
+		renderer.queueText(2, 5, "player position: " + std::to_string(player.getPosition().x) + ", " + std::to_string(player.getPosition().y) + ", " + std::to_string(player.getPosition().z), C_WHITE);
 		
 		fpsCounter++;
 		auto  fpsNow = std::chrono::high_resolution_clock::now();
