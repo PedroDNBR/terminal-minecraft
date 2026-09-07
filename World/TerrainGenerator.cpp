@@ -140,6 +140,21 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 			float directionZ = sinf(angle);
 			float directionY = -0.4f + (float)bitsDirectionY / 128.0f * 0.8f;
 
+			float lengthReach = WORM_CAVE_LENGTH + WORM_CAVE_RADIUS + 1;
+
+			const float chunkMinX = worldOffsetX;
+			const float chunkMaxX = worldOffsetX + Chunk::SIZE_X;
+			const float chunkMinZ = worldOffsetZ;
+			const float chunkMaxZ = worldOffsetZ + Chunk::SIZE_Z;
+			if (startWorldX + lengthReach < chunkMinX)
+				continue;
+			if (startWorldX - lengthReach > chunkMaxX)
+				continue;
+			if (startWorldZ + lengthReach < chunkMinZ)
+				continue;
+			if (startWorldZ - lengthReach > chunkMaxZ)
+				continue;
+
 			carveWormCave(chunk.get(), worldOffsetX, worldOffsetZ, startWorldX, startWorldZ, startY, directionX, directionY, directionZ, WORM_CAVE_RADIUS, WORM_CAVE_LENGTH);
 		}
 		
@@ -438,6 +453,14 @@ void TerrainGenerator::carveWormCave(Chunk* chunk, int worldOffsetX, int worldOf
 		startY += directionY;
 		startWorldZ += directionZ;
 		int r = (int)radius;
+
+		float localX = startWorldX - worldOffsetX;
+		float localZ = startWorldZ - worldOffsetZ;
+
+		if (localX + r < 0 || localX - r >= Chunk::SIZE_X) 
+			continue;
+		if (localZ + r < 0 || localZ - r >= Chunk::SIZE_Z) 
+			continue;
 
 		for (int deltaX = -r; deltaX <= r; deltaX++)
 		for (int deltaY = -r; deltaY <= r; deltaY++)
