@@ -192,6 +192,10 @@ Screenshots from the build history, in rough chronological order:
         <strong>Determinisc Oversan</strong><br>
         <img width="100%" src="https://i.imgur.com/A10Kwqd.png" />
       </td>
+      <td align="center">
+        <strong>Determinisc Oversan in caves</strong><br>
+        <img width="100%" src="https://i.imgur.com/2H8TrE3.png" />
+      </td>
     </tr>
 </table>
 <br/>
