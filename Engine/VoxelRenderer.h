@@ -10,6 +10,8 @@
 #include "../Core/Vertex.h"
 #include "../World/Camera.h"
 #include "../World/Chunk/Chunk.h"
+#include "../World/Chunk/BlockAccess.h"
+#include "../World/Chunk/BlockProperties.h"
 #include "../World/ChunkManager.h"
 #include "../World/Cube.h"
 #include "../World/Lighting.h"
@@ -38,8 +40,7 @@ private:
 	std::vector<VisibleMesh> meshDrawList;
 	bool meshListDirty = true;
 
-	std::vector<Quad> buildMeshData(Chunk* chunk, ChunkManager& chunkManager);
-	std::vector<Quad> buildMeshData(Chunk* chunk, Chunk* negativeXNeighbour, Chunk* positiveXNeighbour, Chunk* negativeZNeighbour, Chunk* positiveZNeighbour, ChunkManager& chunkManager);
+	std::vector<Quad> buildMeshData(Chunk* chunk, const BlockAccess::Neighbours& neighbours);
 
 	Vector3 makeVertex(float fu, float fv, int normalAxis, float faceNormal, int uAxis, int vAxis, const float offsetX, const float offsetZ);
 	Vector3 reconstructCenter(const Quad& quad, float offsetX, float offsetZ, float normalAxis, float uAxis, float vAxis);

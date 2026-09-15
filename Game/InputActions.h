@@ -1,0 +1,18 @@
+#pragma once
+enum class InputAction
+{
+	MOVE_FORWARD,
+	MOVE_BACKWARD,
+	MOVE_LEFT,
+	MOVE_RIGHT,
+	JUMP,
+	CROUCH,
+	LOOK_UP,
+	LOOK_DOWN,
+	LOOK_LEFT,
+	LOOK_RIGHT,
+	PLACE_BLOCK,
+	DESTROY_BLOCK,
+	EXIT_GAME,
+	MAX
+};

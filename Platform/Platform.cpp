@@ -31,7 +31,7 @@ void Platform::getTerminalSize(int& width, int& height)
 {
 	CONSOLE_SCREEN_BUFFER_INFO consoleScreenBufferInfo;
 	if (!GetConsoleScreenBufferInfo(handle, &consoleScreenBufferInfo)) {
-		width = 80; height = 25;   // fallback + dá pra pôr breakpoint aqui
+		width = 80; height = 25;
 		return;
 	}
 
@@ -43,6 +43,36 @@ void Platform::write(const char* data, size_t length)
 {
 	DWORD written;
 	WriteFile(handle, data, (DWORD)length, &written, nullptr);
+}
+
+namespace
+{
+	constexpr int keyMap[] =
+	{
+		'W',
+		'A', 
+		'S', 
+		'D',
+		'P', 
+		'B',
+		'N',
+		VK_ESCAPE,
+		VK_RETURN,
+		VK_SPACE,
+		'Q',
+		'I',
+		'J', 
+		'K', 
+		'L'
+	};
+	static_assert(sizeof(keyMap) / sizeof(keyMap[0]) == static_cast<int>(Key::MAX),
+		"Make sure the keyMap array has the same number of elements as the Key enum");
+}
+
+bool Platform::isKeyDown(Key key)
+{
+	const int vk = keyMap[static_cast<int>(key)];
+	return (GetAsyncKeyState(vk) & 0x8000) != 0;
 }
 
 #endif // _WIN32

@@ -1,6 +1,8 @@
 #pragma once
 #include "../../Core/Vector.h"
 #include "../../World/Camera.h"
+#include "../InputManager.h"
+
 class Player
 {
 public:
@@ -12,7 +14,7 @@ public:
 
 	void setPosition(const Vector3& newPosition);
 	void setRotation(const Vector3& newRotation);
-	void tick(float deltaTime);
+	void tick(float deltaTime, InputManager& inputManager);
 
 	float movementSpeed = 80.f;
 	float cameraSpeed = 80.f;

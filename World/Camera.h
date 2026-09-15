@@ -44,4 +44,10 @@ struct Camera
 		cosPitch = cosf(pitch);
 		sinPitch = sinf(pitch);
 	}
+	
+	Vector3 getLookDirection() const
+	{
+		return { -sinYaw * cosPitch, sinPitch, cosYaw * cosPitch };
+	}
+
 };

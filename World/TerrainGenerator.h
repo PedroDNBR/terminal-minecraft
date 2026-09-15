@@ -7,12 +7,12 @@
 #include "Chunk/Chunk.h"
 #include "../Engine/Quad.h"
 #include "Chunk/Colunm.h"
-class ChunkManager;
+#include "Chunk/ChunkModifications.h"
 
 class TerrainGenerator
 {
 public:
-	std::unique_ptr<Chunk> generateChunkData(ChunkCoord chunkPosition, ChunkManager& chunkManager);
+	std::unique_ptr<Chunk> generateChunkData(ChunkCoord chunkPosition, const ChunkModifications& modifications);
 
 	NoiseCache buildNoiseCache(ChunkCoord chunkPosition, uint32_t seed);
 

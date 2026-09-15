@@ -1,4 +1,6 @@
 #pragma once
+#include <functional>
+
 struct ChunkCoord
 {
     int x = 0, z = 0;

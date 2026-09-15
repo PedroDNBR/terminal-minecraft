@@ -12,8 +12,10 @@
 #include "World/Camera.h"
 #include "Game/Entities/Player.h"
 #include "World/ChunkManager.h"
+#include "World/World.h"
 #include "Core/Profiler.h"
 #include "Platform/Platform.h"
+#include "Game/InputManager.h"
 
 int main()
 {
@@ -22,9 +24,28 @@ int main()
 	Renderer renderer;
 	renderer.init();
 
+	InputManager inputManager;
+
+	inputManager.bind(InputAction::MOVE_FORWARD, Key::W);
+	inputManager.bind(InputAction::MOVE_BACKWARD, Key::S);
+	inputManager.bind(InputAction::MOVE_LEFT, Key::A);
+	inputManager.bind(InputAction::MOVE_RIGHT, Key::D);
+	
+	inputManager.bind(InputAction::JUMP, Key::SPACE);
+	inputManager.bind(InputAction::CROUCH, Key::Q);
+
+	inputManager.bind(InputAction::LOOK_UP, Key::I);
+	inputManager.bind(InputAction::LOOK_DOWN, Key::K);
+	inputManager.bind(InputAction::LOOK_LEFT, Key::J);
+	inputManager.bind(InputAction::LOOK_RIGHT, Key::L);
+
+	inputManager.bind(InputAction::PLACE_BLOCK, Key::B);
+	inputManager.bind(InputAction::DESTROY_BLOCK, Key::N);
+
+	inputManager.bind(InputAction::EXIT_GAME, Key::P);
+
 	const float DAY_LENGTH = 30.0f;
 	float timeOfDay = .3f;
-
 
 	Lighting lighting;
 
@@ -35,7 +56,7 @@ int main()
 #endif
 
 	ChunkManager chunkManager;
-	chunkManager.setBlockProperties();
+	World world(chunkManager);
 
 	VoxelRenderer voxelRenderer;
 
@@ -91,12 +112,16 @@ int main()
 	double commitReadyChunksAverage = 0;
 	double unloadChunksMeshesAverage = 0;
 
+	BlockType: uint8_t debugTargetBlock = BlockType::B_AIR;
+
 	while (true)
 	{
 		auto now = std::chrono::high_resolution_clock::now();
 		deltaTime = std::chrono::duration<float>(now - lastTime).count();
 		lastTime = now;
 		if (deltaTime > 0.1f) deltaTime = 0.1f;
+
+		inputManager.tick(deltaTime);
 
 		timeOfDay += deltaTime / DAY_LENGTH;
 
@@ -112,7 +137,15 @@ int main()
 		double renderMs = 0;
 		double presentMs = 0;
 
-		player.tick(deltaTime);
+		player.tick(deltaTime, inputManager);
+		// just for testing
+		if (inputManager.isActionPressed(InputAction::PLACE_BLOCK))
+		{
+			debugTargetBlock++;
+			if (debugTargetBlock >= BlockType::BLOCK_MAX)
+				debugTargetBlock = BlockType::B_AIR;
+			world.setBlockAtWorldPosition({ 0, 63, 0 }, static_cast<BlockType>(debugTargetBlock));
+		}
 
 		if(fpsCounter == 0)
 			renderer.hasWindowResized();
@@ -203,7 +236,7 @@ int main()
 		renderer.queueText(2, 12, "presentMs: " + std::to_string(presentAverage), C_WHITE);
 		renderer.queueText(2, 13, "" + std::to_string(renderer.getLogicalWidth()) + "x" + std::to_string(renderer.getLogicalHeight()), C_WHITE);
 	
-		if (GetKeyState('P') & 0x8000)
+		if (inputManager.isActionPressed(InputAction::EXIT_GAME))
 			break;
 	}
 

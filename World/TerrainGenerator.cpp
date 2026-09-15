@@ -1,10 +1,12 @@
 #include <queue>
-#include "ChunkManager.h"
+#include "TerrainGenerator.h"
 #include "Noise/Noise.h"
 #include "Cube.h"
 #include "Chunk/ColunmGrid.h"
+#include "Chunk/BlockProperties.h"
+#include "Chunk/WorldEdits.h"
 
-std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosition, ChunkManager& chunkManager)
+std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosition, const ChunkModifications& modifications)
 {
 	std::unique_ptr<Chunk> chunk = std::make_unique<Chunk>();
 	chunk->position = chunkPosition;
@@ -160,14 +162,22 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 		
 	}
 
+	for (const auto& [blockIndex, blockType] : modifications.modifiedBlocks)
+	{
+		int localX = 0, localY = 0, localZ = 0;
+		WorldEdits::unpackIndex(blockIndex, localX, localY, localZ);
+
+		stampBlock(chunk.get(), localX, localY, localZ, blockType);
+	}
+
 	for (int x = 0; x < Chunk::SIZE_X; x++)
 	for (int z = 0; z < Chunk::SIZE_Z; z++)
 	{
-		uint8_t sky = 7;
+		uint8_t sky = SHADE_LEVELS - 1;
 		for (int y = Chunk::SIZE_Y - 1; y >= 0; y--)
 		{
-			uint8_t opacity = chunkManager.OPACITY[chunk->blocks[x][z][y]];
-			if (opacity >= 7)
+			uint8_t opacity = Blocks::OPACITY[chunk->blocks[x][z][y]];
+			if (opacity >= Blocks::OPAQUE_THRESHOLD)
 				sky = 0;
 			/*else if (isExposedToSky)
 				chunk->skyLight[x][z][y] = 7;*/
@@ -205,9 +215,9 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 				neighborPosition.z < 0 || neighborPosition.z >= Chunk::SIZE_Z)
 				continue;
 
-			uint8_t opacity = chunkManager.OPACITY[chunk->blocks[neighborPosition.x][neighborPosition.z][neighborPosition.y]];
+			uint8_t opacity = Blocks::OPACITY[chunk->blocks[neighborPosition.x][neighborPosition.z][neighborPosition.y]];
 
-			if(opacity >= 7)
+			if (opacity >= Blocks::OPAQUE_THRESHOLD)
 				continue;
 
 			uint8_t newLightLevel = (std::max)(0, lightLevel - 1 - opacity);
@@ -219,8 +229,8 @@ std::unique_ptr<Chunk> TerrainGenerator::generateChunkData(ChunkCoord chunkPosit
 				lightFloodQueue.push(neighborPosition);
 			}
 		}
-
 	}
+
 
 	return chunk;
 }
