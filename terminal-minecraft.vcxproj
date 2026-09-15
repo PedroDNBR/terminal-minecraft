@@ -139,6 +139,7 @@
     <ClCompile Include="Terminal\VTOutput.cpp" />
     <ClCompile Include="Terminal\WinWriteConsoleOutput.cpp" />
     <ClCompile Include="World\ChunkManager.cpp" />
+    <ClCompile Include="World\RaycastHit.cpp" />
     <ClCompile Include="World\World.cpp" />
     <ClCompile Include="World\Chunk\BlockAccess.cpp" />
     <ClCompile Include="World\TerrainGenerator.cpp" />

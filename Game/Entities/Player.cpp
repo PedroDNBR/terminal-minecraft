@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "../../World/World.h"
 
 void Player::setPosition(const Vector3& newPosition)
 {
@@ -13,7 +14,7 @@ void Player::setRotation(const Vector3& newRotation)
 	camera.pitch = rotation.x * 3.14159f / 180;
 }
 
-void Player::tick(float deltaTime, InputManager& inputManager)
+void Player::tick(float deltaTime, InputManager& inputManager, World& world)
 {
 	if (inputManager.isActionDown(InputAction::MOVE_FORWARD)) setPosition(getPosition() + getCamera().getForward() * movementSpeed * deltaTime);
 	if (inputManager.isActionDown(InputAction::MOVE_BACKWARD)) setPosition(getPosition() + getCamera().getForward() * -movementSpeed * deltaTime);
@@ -28,4 +29,17 @@ void Player::tick(float deltaTime, InputManager& inputManager)
 	if (inputManager.isActionDown(InputAction::JUMP)) setPosition(getPosition() + Vector3{ 0, movementSpeed, 0 } *deltaTime);
 	if (inputManager.isActionDown(InputAction::CROUCH)) setPosition(getPosition() + Vector3{ 0, -movementSpeed, 0 } *deltaTime);
 	//if (GetKeyState(VK_LCONTROL) & 0x8000) setPosition(getPosition() + Vector3{ 0, -movementSpeed, 0 } *deltaTime);
+
+	if (inputManager.isActionPressed(InputAction::PLACE_BLOCK))
+	{
+		RaycastHit hit = world.raycast(getPosition(), getCamera().getLookDirection(), BLOCK_REACH);
+		if (hit.hit && hit.placement != Vector3Int{(int)std::floorf(getPosition().x), (int)std::floorf(getPosition().y), (int)std::floorf(getPosition().z)})
+			world.setBlockAtWorldPosition(hit.placement, static_cast<BlockType>(B_STONE));
+	}
+	if (inputManager.isActionPressed(InputAction::DESTROY_BLOCK))
+	{
+		RaycastHit hit = world.raycast(getPosition(), getCamera().getLookDirection(), BLOCK_REACH);
+		if(hit.hit)
+			world.setBlockAtWorldPosition(hit.block, static_cast<BlockType>(B_AIR));
+	}
 }

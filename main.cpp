@@ -66,9 +66,11 @@ int main()
 	camera.updateCatheti();
 
 	Player player(camera);
-	Vector3 startingPlayerPosition = { 0,200,-2 };
+	//Vector3 startingPlayerPosition = { 0,200,-2 };
+	Vector3 startingPlayerPosition = { 0,64,-2 };
 	player.setPosition(startingPlayerPosition);
-	player.setRotation(Vector3{ -90, 0, 0 });
+	player.setRotation(Vector3{ 0, 0, 0 });
+	//player.setRotation(Vector3{ -90, 0, 0 });
 
 	std::vector<std::thread> workers;
 	int threads = std::thread::hardware_concurrency();
@@ -112,8 +114,6 @@ int main()
 	double commitReadyChunksAverage = 0;
 	double unloadChunksMeshesAverage = 0;
 
-	BlockType: uint8_t debugTargetBlock = BlockType::B_AIR;
-
 	while (true)
 	{
 		auto now = std::chrono::high_resolution_clock::now();
@@ -137,16 +137,8 @@ int main()
 		double renderMs = 0;
 		double presentMs = 0;
 
-		player.tick(deltaTime, inputManager);
-		// just for testing
-		if (inputManager.isActionPressed(InputAction::PLACE_BLOCK))
-		{
-			debugTargetBlock++;
-			if (debugTargetBlock >= BlockType::BLOCK_MAX)
-				debugTargetBlock = BlockType::B_AIR;
-			world.setBlockAtWorldPosition({ 0, 63, 0 }, static_cast<BlockType>(debugTargetBlock));
-		}
-
+		player.tick(deltaTime, inputManager, world);
+		
 		if(fpsCounter == 0)
 			renderer.hasWindowResized();
 

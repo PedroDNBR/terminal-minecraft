@@ -70,6 +70,9 @@
     <ClCompile Include="Game\InputManager.cpp">
       <Filter>Game</Filter>
     </ClCompile>
+    <ClCompile Include="World\RaycastHit.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\Vector.h">
