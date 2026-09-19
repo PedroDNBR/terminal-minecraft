@@ -139,7 +139,7 @@
     <ClCompile Include="Terminal\VTOutput.cpp" />
     <ClCompile Include="Terminal\WinWriteConsoleOutput.cpp" />
     <ClCompile Include="World\ChunkManager.cpp" />
-    <ClCompile Include="World\RaycastHit.cpp" />
+    <ClCompile Include="World\RaycastHit.h" />
     <ClCompile Include="World\World.cpp" />
     <ClCompile Include="World\Chunk\BlockAccess.cpp" />
     <ClCompile Include="World\TerrainGenerator.cpp" />
@@ -150,6 +150,7 @@
     <ClInclude Include="Core\Vertex.h" />
     <ClInclude Include="Core\MPSCQueue.h" />
     <ClInclude Include="Core\Profiler.h" />
+    <ClInclude Include="Game\GameMode.h" />
     <ClInclude Include="Game\InputActions.h" />
     <ClInclude Include="Game\InputManager.h" />
     <ClInclude Include="Platform\KeyMapping.h" />

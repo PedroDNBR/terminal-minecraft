@@ -1,4 +1,5 @@
 #pragma once
+
 enum BlockType : uint8_t
 {
 	B_AIR = 0,

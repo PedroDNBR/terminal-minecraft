@@ -5,6 +5,7 @@ enum class InputAction
 	MOVE_BACKWARD,
 	MOVE_LEFT,
 	MOVE_RIGHT,
+	SPRINT,
 	JUMP,
 	CROUCH,
 	LOOK_UP,
@@ -13,6 +14,7 @@ enum class InputAction
 	LOOK_RIGHT,
 	PLACE_BLOCK,
 	DESTROY_BLOCK,
+	CHANGE_GAMEMODE,
 	EXIT_GAME,
 	MAX
 };

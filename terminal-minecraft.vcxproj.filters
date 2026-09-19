@@ -70,7 +70,7 @@
     <ClCompile Include="Game\InputManager.cpp">
       <Filter>Game</Filter>
     </ClCompile>
-    <ClCompile Include="World\RaycastHit.cpp">
+    <ClCompile Include="World\RaycastHit.h">
       <Filter>World</Filter>
     </ClCompile>
   </ItemGroup>
@@ -203,6 +203,9 @@
     </ClInclude>
     <ClInclude Include="World\Chunk\Colunm.h">
       <Filter>World\Chunk</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\GameMode.h">
+      <Filter>Game</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

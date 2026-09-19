@@ -5,6 +5,28 @@
 
 namespace Blocks
 {
+	enum Density : uint8_t
+	{
+		AIR,
+		FLUID_THIN,
+		FLUID_DENSE,
+		SOLID,
+		MAX
+	};
+
+	inline constexpr uint8_t DENSITY[BlockType::BLOCK_MAX] = {
+		/* B_AIR      */ Density::AIR,
+		/* B_GRASS    */ Density::SOLID,
+		/* B_DIRT     */ Density::SOLID,
+		/* B_STONE    */ Density::SOLID,
+		/* B_LOG      */ Density::SOLID,
+		/* B_LEAVES   */ Density::SOLID,
+		/* B_WATER    */ Density::FLUID_THIN,
+		/* B_SAND     */ Density::SOLID,
+		/* B_CACTUS   */ Density::SOLID,
+		/* B_BEDROCK  */ Density::SOLID
+	};
+
 	inline constexpr uint8_t OPAQUE_THRESHOLD = 7;
 
 	inline constexpr uint8_t OPACITY[BlockType::BLOCK_MAX] = {
@@ -33,6 +55,8 @@ namespace Blocks
 		/* B_BEDROCK */ { Color::C_BEDROCK,Color::C_BEDROCK,Color::C_BEDROCK,Color::C_BEDROCK,Color::C_BEDROCK,Color::C_BEDROCK }
 	};
 
+	static_assert(sizeof(DENSITY) / sizeof(DENSITY[0]) == BlockType::BLOCK_MAX,
+		"DENSITY out of sync with BlockType enum");
 	static_assert(sizeof(OPACITY) / sizeof(OPACITY[0]) == BlockType::BLOCK_MAX,
 		"OPACITY out of sync with BlockType enum");
 	static_assert(sizeof(PROPERTIES) / sizeof(PROPERTIES[0]) == BlockType::BLOCK_MAX,

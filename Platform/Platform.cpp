@@ -57,13 +57,16 @@ namespace
 		'B',
 		'N',
 		VK_ESCAPE,
+		VK_LSHIFT,
+		VK_LCONTROL,
 		VK_RETURN,
 		VK_SPACE,
 		'Q',
 		'I',
 		'J', 
 		'K', 
-		'L'
+		'L',
+		'G'
 	};
 	static_assert(sizeof(keyMap) / sizeof(keyMap[0]) == static_cast<int>(Key::MAX),
 		"Make sure the keyMap array has the same number of elements as the Key enum");

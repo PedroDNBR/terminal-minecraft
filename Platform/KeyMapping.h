@@ -10,6 +10,8 @@ enum class Key
 	B,
 	N,
 	ESCAPE,
+	LSHIFT,
+	LCNTRL,
 	ENTER,
 	SPACE,
 	Q,
@@ -17,6 +19,7 @@ enum class Key
 	J,
 	K,
 	L,
+	G,
 	MAX
 };
 

@@ -15,6 +15,8 @@ public:
 
 	RaycastHit raycast(Vector3 origin, Vector3 direction, float maxDistance) const;
 
+	inline static constexpr float GRAVITY = 24.0f;
+
 private:
 	ChunkManager& chunkManager;
 };

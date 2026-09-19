@@ -32,7 +32,8 @@ int main()
 	inputManager.bind(InputAction::MOVE_RIGHT, Key::D);
 	
 	inputManager.bind(InputAction::JUMP, Key::SPACE);
-	inputManager.bind(InputAction::CROUCH, Key::Q);
+	inputManager.bind(InputAction::CROUCH, Key::LSHIFT);
+	inputManager.bind(InputAction::SPRINT, Key::LCNTRL);
 
 	inputManager.bind(InputAction::LOOK_UP, Key::I);
 	inputManager.bind(InputAction::LOOK_DOWN, Key::K);
@@ -42,9 +43,11 @@ int main()
 	inputManager.bind(InputAction::PLACE_BLOCK, Key::B);
 	inputManager.bind(InputAction::DESTROY_BLOCK, Key::N);
 
+	inputManager.bind(InputAction::CHANGE_GAMEMODE, Key::G);
+
 	inputManager.bind(InputAction::EXIT_GAME, Key::P);
 
-	const float DAY_LENGTH = 30.0f;
+	const float DAY_LENGTH = 120.0f;
 	float timeOfDay = .3f;
 
 	Lighting lighting;
@@ -67,7 +70,7 @@ int main()
 
 	Player player(camera);
 	//Vector3 startingPlayerPosition = { 0,200,-2 };
-	Vector3 startingPlayerPosition = { 0,64,-2 };
+	Vector3 startingPlayerPosition = { 0,40,-10 };
 	player.setPosition(startingPlayerPosition);
 	player.setRotation(Vector3{ 0, 0, 0 });
 	//player.setRotation(Vector3{ -90, 0, 0 });
@@ -95,6 +98,10 @@ int main()
 	auto lastTime = std::chrono::high_resolution_clock::now();
 	auto now = std::chrono::high_resolution_clock::now();
 
+	float accumulator = 0.0f;
+	const float fixedDeltaTime = 1.0f / 60.0f; // 60 FPS
+	const int maxFixedUpdatesPerFrame = 4; // To prevent spiral of death
+
 	auto fpsWinStart = std::chrono::high_resolution_clock::now();
 	int  fpsCounter = 0, currentFPS = 0;
 
@@ -119,9 +126,14 @@ int main()
 		auto now = std::chrono::high_resolution_clock::now();
 		deltaTime = std::chrono::duration<float>(now - lastTime).count();
 		lastTime = now;
+
 		if (deltaTime > 0.1f) deltaTime = 0.1f;
 
+		accumulator += deltaTime;
+
 		inputManager.tick(deltaTime);
+
+		camera.updateCatheti();
 
 		timeOfDay += deltaTime / DAY_LENGTH;
 
@@ -139,10 +151,18 @@ int main()
 
 		player.tick(deltaTime, inputManager, world);
 		
+		int attempts = 0;
+		while (accumulator >= fixedDeltaTime && attempts < maxFixedUpdatesPerFrame)
+		{
+			player.fixedTick(fixedDeltaTime, inputManager, world);
+			accumulator -= fixedDeltaTime;
+			if (attempts == maxFixedUpdatesPerFrame)
+				accumulator = 0.0f;
+			attempts++;
+		}
+
 		if(fpsCounter == 0)
 			renderer.hasWindowResized();
-
-		camera.updateCatheti();
 
 		chunkManager.handleChunkLoad(camera);
 		chunkManager.handleChunkUnload(camera);
