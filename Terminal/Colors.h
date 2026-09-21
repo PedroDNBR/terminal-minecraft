@@ -1,20 +1,20 @@
 #pragma once
 enum Color {
     C_BLACK,
-    C_WHITE,
-    C_GRASS,
+    C_BEDROCK,
+    C_SKY_NIGHT,
+    C_COBBLESTONE,
     C_DIRT,
     C_LOG,
 	C_LEAVES,
     C_PLANK,
     C_CACTUS,
-    C_SAND,
-    C_STONE,
-	C_COBBLESTONE,
     C_WATER,
-    C_BEDROCK,
+    C_STONE,
+    C_SAND,
+    C_GRASS,
     C_SKY,
-    C_SKY_NIGHT,
+    C_WHITE,
 	COLOR_MAX
 };
     

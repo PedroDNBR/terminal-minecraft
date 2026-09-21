@@ -10,20 +10,20 @@ namespace VTPalette
 {
     inline constexpr uint32_t BASE_PALETTE[COLOR_MAX] = {
         /*BLACK*/        0x000000,
-        /*WHITE*/        0xFFFFFF,
-        /*GRASS*/        0x73B349,
+        /*BEDROCK*/      0x333333,
+        /*C_SKY_NIGHT*/  0x54587D,
+        /*COBBLESTONE*/  0x626262,
         /*DIRT*/         0x79553A,
         /*LOG*/          0x463926,
         /*LEAVES*/       0x408F2F,
         /*PLANK*/        0xB4905A,
         /*CACTUS*/       0x11831F,
-        /*SAND*/         0xDAD49C,
-        /*STONE*/        0x7F7F7F,
-        /*COBBLESTONE*/  0x626262,
         /*WATER*/        0x002AFF,
-        /*BEDROCK*/      0x333333,
+        /*STONE*/        0x7F7F7F,
+        /*SAND*/         0xDAD49C,
+        /*GRASS*/        0x73B349,
         /*SKY*/          0x74BAF2,
-        /*C_SKY_NIGHT*/  0x54587D
+        /*WHITE*/        0xFFFFFF,
     };
     static_assert(sizeof(BASE_PALETTE) / sizeof(BASE_PALETTE[0]) == COLOR_MAX,
         "BASE e enum Color fora de sincronia");

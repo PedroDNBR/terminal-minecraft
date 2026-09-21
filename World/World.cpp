@@ -98,7 +98,8 @@ RaycastHit World::raycast(Vector3 origin, Vector3 direction, float maxDistance) 
 			return {
 				true,
 				block,
-				previousBlock
+				previousBlock,
+				blockType
 			};
 		}
 	}

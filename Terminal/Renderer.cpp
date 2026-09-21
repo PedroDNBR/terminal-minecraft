@@ -35,6 +35,17 @@ void Renderer::drawPixel(int x, int y, uint8_t color)
 	colorBuffer[y * logicalWidth + x] = color;
 }
 
+Color Renderer::getPixelColor(int x, int y)
+{
+	if (x < 0 || x >= logicalWidth || y < 0 || y >= logicalHeight)
+		return C_BLACK;
+
+	uint8_t packedColor = colorBuffer[y * logicalWidth + x];
+
+	uint8_t color = packedColor / SHADE_LEVELS;
+	return (Color)color;
+}
+
 void Renderer::drawPixelDepth(int x, int y, float inverseZ, uint8_t color)
 {
 	if (x < 0 || x >= logicalWidth || y < 0 || y >= logicalHeight)

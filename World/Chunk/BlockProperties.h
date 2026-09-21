@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <string>
 #include "Block.h"
 #include "../../Terminal/Colors.h"
 
@@ -55,10 +56,25 @@ namespace Blocks
 		/* B_BEDROCK */ { Color::C_BEDROCK,Color::C_BEDROCK,Color::C_BEDROCK,Color::C_BEDROCK,Color::C_BEDROCK,Color::C_BEDROCK }
 	};
 
+	inline constexpr std::string_view BlockTypeNames[BlockType::BLOCK_MAX] = {
+		/* B_AIR     */ "Air",
+		/* B_GRASS   */ "Grass",
+		/* B_DIRT    */ "Dirt",
+		/* B_STONE   */ "Stone",
+		/* B_LOG     */ "Log",
+		/* B_LEAVES  */ "Leaves",
+		/* B_WATER   */ "Water",
+		/* B_SAND    */ "Sand",
+		/* B_CACTUS  */ "Cactus",
+		/* B_BEDROCK */ "Bedrock"
+	};
+
 	static_assert(sizeof(DENSITY) / sizeof(DENSITY[0]) == BlockType::BLOCK_MAX,
 		"DENSITY out of sync with BlockType enum");
 	static_assert(sizeof(OPACITY) / sizeof(OPACITY[0]) == BlockType::BLOCK_MAX,
 		"OPACITY out of sync with BlockType enum");
 	static_assert(sizeof(PROPERTIES) / sizeof(PROPERTIES[0]) == BlockType::BLOCK_MAX,
 		"PROPERTIES out of sync with BlockType enum");
+	static_assert(sizeof(BlockTypeNames) / sizeof(BlockTypeNames[0]) == BlockType::BLOCK_MAX,
+		"BlockTypeNames out of sync with BlockType enum");
 }

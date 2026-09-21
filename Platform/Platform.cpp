@@ -66,7 +66,16 @@ namespace
 		'J', 
 		'K', 
 		'L',
-		'G'
+		'G',
+		'1',
+		'2',
+		'3',
+		'4',
+		'5',
+		'6',
+		'7',
+		'8',
+		'9'
 	};
 	static_assert(sizeof(keyMap) / sizeof(keyMap[0]) == static_cast<int>(Key::MAX),
 		"Make sure the keyMap array has the same number of elements as the Key enum");

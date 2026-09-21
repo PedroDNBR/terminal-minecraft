@@ -48,6 +48,25 @@ void Player::tick(float deltaTime, InputManager& inputManager, World& world)
 			break;
 		}
 	}
+
+	if (inputManager.isActionPressed(InputAction::HOTBAR_1))
+		currentHotbarSlotSelected = 0;
+	if (inputManager.isActionPressed(InputAction::HOTBAR_2))
+		currentHotbarSlotSelected = 1;
+	if (inputManager.isActionPressed(InputAction::HOTBAR_3))
+		currentHotbarSlotSelected = 2;
+	if (inputManager.isActionPressed(InputAction::HOTBAR_4))
+		currentHotbarSlotSelected = 3;
+	if (inputManager.isActionPressed(InputAction::HOTBAR_5))
+		currentHotbarSlotSelected = 4;
+	if (inputManager.isActionPressed(InputAction::HOTBAR_6))
+		currentHotbarSlotSelected = 5;
+	if (inputManager.isActionPressed(InputAction::HOTBAR_7))
+		currentHotbarSlotSelected = 6;
+	if (inputManager.isActionPressed(InputAction::HOTBAR_8))
+		currentHotbarSlotSelected = 7;
+	if (inputManager.isActionPressed(InputAction::HOTBAR_9))
+		currentHotbarSlotSelected = 8;
 }
 
 void Player::fixedTick(float fixedDeltaTime, InputManager& inputManager, World& world)
@@ -58,6 +77,27 @@ void Player::fixedTick(float fixedDeltaTime, InputManager& inputManager, World& 
 		handleSurvivalMovement(fixedDeltaTime, inputManager, world);
 		break;
 	}
+}
+
+void Player::addItemToHotbar(BlockType blockType, uint8_t count, uint8_t slot)
+{
+	if (slot >= hotbar.size())
+		return;
+	hotbar[slot].type = blockType;
+	hotbar[slot].count = count;
+}
+
+void Player::removeItemFromHotbar(uint8_t slot)
+{
+	if (slot >= hotbar.size())
+		return;
+	hotbar[slot].type.reset();
+	hotbar[slot].count = 0;
+}
+
+void Player::selectHotbarSlot(uint8_t slot)
+{
+	currentHotbarSlotSelected = slot;
 }
 
 void Player::handleSurvivalMovement(float deltaTime, InputManager& inputManager, World& world)
@@ -114,15 +154,59 @@ void Player::handleBlockManagement(float deltaTime, InputManager& inputManager, 
 {
 	if (inputManager.isActionPressed(InputAction::PLACE_BLOCK))
 	{
-		RaycastHit hit = world.raycast(getCamera().position, getCamera().getLookDirection(), BLOCK_REACH);
-		if (hit.hit && hit.placement != Vector3Int{ (int)std::floorf(getCamera().position.x), (int)std::floorf(getCamera().position.y), (int)std::floorf(getCamera().position.z) })
-			world.setBlockAtWorldPosition(hit.placement, static_cast<BlockType>(B_STONE));
+		placeSelectedBlockOnSight(world);
 	}
 	if (inputManager.isActionPressed(InputAction::DESTROY_BLOCK))
 	{
-		RaycastHit hit = world.raycast(getCamera().position, getCamera().getLookDirection(), BLOCK_REACH);
-		if (hit.hit)
-			world.setBlockAtWorldPosition(hit.block, static_cast<BlockType>(B_AIR));
+		destroyBlockOnSight(world);
+	}
+}
+
+void Player::placeSelectedBlockOnSight(World& world)
+{
+	RaycastHit hit = world.raycast(getCamera().position, getCamera().getLookDirection(), BLOCK_REACH);
+
+	if (!hit.hit) return;
+	if (occupiesCell(hit.placement)) return;
+	if (!hotbar[currentHotbarSlotSelected].type.has_value()) return;
+
+	world.setBlockAtWorldPosition(hit.placement, hotbar[currentHotbarSlotSelected].type.value());
+	if (gameMode == GameMode::Survival)
+	{
+		hotbar[currentHotbarSlotSelected].count--;
+		if (hotbar[currentHotbarSlotSelected].count == 0)
+			removeItemFromHotbar(currentHotbarSlotSelected);
+	}
+}
+
+void Player::destroyBlockOnSight(World& world)
+{
+	RaycastHit hit = world.raycast(getCamera().position, getCamera().getLookDirection(), BLOCK_REACH);
+	if (hit.hit)
+	{
+		world.setBlockAtWorldPosition(hit.block, static_cast<BlockType>(B_AIR));
+		if (gameMode == GameMode::Survival)
+		{
+			uint8_t firstEmptySlot = 255;
+			for (int slot = 0; slot < hotbar.size(); slot++)
+			{
+				if (!hotbar[slot].type.has_value() && firstEmptySlot == 255)
+					firstEmptySlot = slot;
+				if (hotbar[slot].type.value_or(B_AIR) == hit.blockType)
+				{
+					if (hotbar[slot].count < MAX_ITEM_STACK)
+					{
+						hotbar[slot].count++;
+						break;
+					}
+				}
+				if (firstEmptySlot != 255)
+				{
+					addItemToHotbar(hit.blockType, 1, firstEmptySlot);
+					break;
+				}
+			}
+		}
 	}
 }
 
@@ -188,22 +272,32 @@ void Player::moveWithCollision(const Vector3& displacement, const World& world)
 
 bool Player::collideWithWorld(const Vector3& newPosition, const World& world) const
 {
-	float minX = newPosition.x - PLAYER_HALF_WIDTH;
-	float maxX = newPosition.x + PLAYER_HALF_WIDTH;
-
-	float minY = newPosition.y;
-	float maxY = newPosition.y + currentHeight();
-
-	float minZ = newPosition.z - PLAYER_HALF_WIDTH;
-	float maxZ = newPosition.z + PLAYER_HALF_WIDTH;
-
-	for (int x = (int)floorf(minX); x <= (int)ceilf(maxX) - 1; x++)
-	for (int y = (int)floorf(minY); y <= (int)ceilf(maxY) - 1; y++)
-	for (int z = (int)floorf(minZ); z <= (int)ceilf(maxZ) - 1; z++)
-	{
-		if(Blocks::DENSITY[world.getBlockAtWorldPosition({ x, y, z })] == Blocks::Density::SOLID)
-			return true;
-	}
-
+	CellRange range = occupiedCells(newPosition);
+	for (int x = range.min.x; x <= range.max.x; x++)
+		for (int y = range.min.y; y <= range.max.y; y++)
+			for (int z = range.min.z; z <= range.max.z; z++)
+				if (Blocks::DENSITY[world.getBlockAtWorldPosition({ x,y,z })] == Blocks::Density::SOLID)
+					return true;
 	return false;
+}
+
+bool Player::occupiesCell(Vector3Int cell) const
+{
+	CellRange range = occupiedCells(getPosition());
+	return cell.x >= range.min.x && cell.x <= range.max.x
+		&& cell.y >= range.min.y && cell.y <= range.max.y
+		&& cell.z >= range.min.z && cell.z <= range.max.z;
+}
+
+CellRange Player::occupiedCells(const Vector3& feetPosition) const
+{
+	return {
+		{ (int)floorf(feetPosition.x - PLAYER_HALF_WIDTH),
+		  (int)floorf(feetPosition.y),
+		  (int)floorf(feetPosition.z - PLAYER_HALF_WIDTH) },
+
+		{ (int)ceilf(feetPosition.x + PLAYER_HALF_WIDTH) - 1,
+		  (int)ceilf(feetPosition.y + currentHeight()) - 1,
+		  (int)ceilf(feetPosition.z + PLAYER_HALF_WIDTH) - 1 }
+	};
 }

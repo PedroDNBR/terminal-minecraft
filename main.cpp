@@ -16,6 +16,7 @@
 #include "Core/Profiler.h"
 #include "Platform/Platform.h"
 #include "Game/InputManager.h"
+#include "Game/HUD/Hud.h"
 
 int main()
 {
@@ -23,6 +24,8 @@ int main()
 
 	Renderer renderer;
 	renderer.init();
+
+	Hud hud;
 
 	InputManager inputManager;
 
@@ -47,6 +50,16 @@ int main()
 
 	inputManager.bind(InputAction::EXIT_GAME, Key::P);
 
+	inputManager.bind(InputAction::HOTBAR_1, Key::NUM_LINE_1);
+	inputManager.bind(InputAction::HOTBAR_2, Key::NUM_LINE_2);
+	inputManager.bind(InputAction::HOTBAR_3, Key::NUM_LINE_3);
+	inputManager.bind(InputAction::HOTBAR_4, Key::NUM_LINE_4);
+	inputManager.bind(InputAction::HOTBAR_5, Key::NUM_LINE_5);
+	inputManager.bind(InputAction::HOTBAR_6, Key::NUM_LINE_6);
+	inputManager.bind(InputAction::HOTBAR_7, Key::NUM_LINE_7);
+	inputManager.bind(InputAction::HOTBAR_8, Key::NUM_LINE_8);
+	inputManager.bind(InputAction::HOTBAR_9, Key::NUM_LINE_9);
+
 	const float DAY_LENGTH = 120.0f;
 	float timeOfDay = .3f;
 
@@ -64,11 +77,21 @@ int main()
 	VoxelRenderer voxelRenderer;
 
 	Camera camera;
+	camera.fov = 100;
 	camera.fovRadius = camera.fov * 3.14159f / 180.f;
 	camera.focalLen = 1.0f / tanf(camera.fovRadius * .5f);
 	camera.updateCatheti();
 
 	Player player(camera);
+
+	player.addItemToHotbar(B_LOG, 63, 0);
+	player.addItemToHotbar(B_STONE, 32, 1);
+	player.addItemToHotbar(B_SAND, 32, 2);
+	player.addItemToHotbar(B_LEAVES, 32, 3);
+	player.addItemToHotbar(B_DIRT, 32, 4);
+	player.addItemToHotbar(B_GRASS, 32, 5);
+	player.addItemToHotbar(B_CACTUS, 16, 6);
+
 	//Vector3 startingPlayerPosition = { 0,200,-2 };
 	Vector3 startingPlayerPosition = { 0,40,-10 };
 	player.setPosition(startingPlayerPosition);
@@ -185,6 +208,9 @@ int main()
 			ScopedTimer t(renderMs);
 			voxelRenderer.render(renderer, camera, lighting);
 		}
+
+		hud.drawCrosshair(renderer);
+		hud.drawHotbar(player, renderer);
 
 		{
 			ScopedTimer t(presentMs);

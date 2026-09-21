@@ -32,6 +32,12 @@
     <Filter Include="Platform">
       <UniqueIdentifier>{3cd28733-1c3c-40a9-b4c3-d2080800b04b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\HUD">
+      <UniqueIdentifier>{df1be314-50a6-4f85-bb7e-6ce26a169984}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Inventory">
+      <UniqueIdentifier>{db5e7de3-652f-4679-b5e0-449f4890d765}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -72,6 +78,9 @@
     </ClCompile>
     <ClCompile Include="World\RaycastHit.h">
       <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\HUD\Hud.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -206,6 +215,12 @@
     </ClInclude>
     <ClInclude Include="Game\GameMode.h">
       <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Inventory\InventorySlot.h">
+      <Filter>Game\Inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\HUD\Hud.h">
+      <Filter>Game\HUD</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
