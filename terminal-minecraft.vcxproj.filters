@@ -80,7 +80,7 @@
       <Filter>World</Filter>
     </ClCompile>
     <ClCompile Include="Game\HUD\Hud.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Game\HUD</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
