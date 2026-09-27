@@ -57,8 +57,8 @@ public:
 
 	std::array<InventorySlot, MAX_HOTBAR_SLOTS> getHotbar() const& { return hotbar; }
 	uint8_t getCurrentHotbarSlotSelected() const& { return currentHotbarSlotSelected; }
-	BlockType getCurrentHotbarSlotBlockType() const& { return hotbar[currentHotbarSlotSelected].type.value_or(B_AIR); }
-	BlockType getHotbarSlotBlockTypeByIndex(uint8_t index) const& { return hotbar[index].type.value_or(B_AIR); }
+	BlockType getCurrentHotbarSlotBlockType() const& { return hotbar[currentHotbarSlotSelected].type; }
+	BlockType getHotbarSlotBlockTypeByIndex(uint8_t index) const& { return hotbar[index].type; }
 
 private:
 	bool isCrouched = false;

@@ -91,7 +91,7 @@ void Player::removeItemFromHotbar(uint8_t slot)
 {
 	if (slot >= hotbar.size())
 		return;
-	hotbar[slot].type.reset();
+	hotbar[slot].type = B_AIR;
 	hotbar[slot].count = 0;
 }
 
@@ -168,9 +168,9 @@ void Player::placeSelectedBlockOnSight(World& world)
 
 	if (!hit.hit) return;
 	if (occupiesCell(hit.placement)) return;
-	if (!hotbar[currentHotbarSlotSelected].type.has_value()) return;
+	if (hotbar[currentHotbarSlotSelected].count == 0) return;
 
-	world.setBlockAtWorldPosition(hit.placement, hotbar[currentHotbarSlotSelected].type.value());
+	world.setBlockAtWorldPosition(hit.placement, hotbar[currentHotbarSlotSelected].type);
 	if (gameMode == GameMode::Survival)
 	{
 		hotbar[currentHotbarSlotSelected].count--;
@@ -190,9 +190,9 @@ void Player::destroyBlockOnSight(World& world)
 			uint8_t firstEmptySlot = 255;
 			for (int slot = 0; slot < hotbar.size(); slot++)
 			{
-				if (!hotbar[slot].type.has_value() && firstEmptySlot == 255)
+				if (hotbar[slot].count == 0 && firstEmptySlot == 255)
 					firstEmptySlot = slot;
-				if (hotbar[slot].type.value_or(B_AIR) == hit.blockType)
+				if (hotbar[slot].type == hit.blockType)
 				{
 					if (hotbar[slot].count < MAX_ITEM_STACK)
 					{

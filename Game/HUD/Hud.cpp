@@ -48,13 +48,14 @@ void Hud::drawHotbar(const Player& player, Renderer& renderer)
         int x0 = startX + (slot * slotWidth);
         int x1 = x0 + slotWidth;
 
-        BlockType currentBlock = player.getHotbar()[slot].type.value_or(B_AIR);
+        BlockType currentBlock = player.getHotbar()[slot].type;
+        uint8_t currentBlockCount = player.getHotbar()[slot].count;
 
         for (int y = topHotbarBorder + 1; y < screenHeight; y++)
         {
             for (int x = x0 + 1; x < x1; x++)
             {
-                if (currentBlock != B_AIR)
+                if (currentBlockCount > 0)
                     renderer.drawPixel(x, y, colorIndex(
                         static_cast<Color>(Blocks::PROPERTIES[currentBlock].faceColors[4]), SHADE_LEVELS - 1)
                     );
@@ -62,7 +63,7 @@ void Hud::drawHotbar(const Player& player, Renderer& renderer)
                     renderer.drawPixel(x, y, menuBackColor);
             }
         }
-        if (currentBlock != B_AIR)
+        if (currentBlockCount > 0)
         {
             int blockCount = player.getHotbar()[slot].count;
             if(slot == selectedSlot)
