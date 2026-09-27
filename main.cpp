@@ -62,6 +62,14 @@ int main()
 
 	inputManager.bind(InputAction::OPEN_INVENTORY, Key::E);
 
+	inputManager.bind(InputAction::UI_UP, Key::I);
+	inputManager.bind(InputAction::UI_DOWN, Key::K);
+	inputManager.bind(InputAction::UI_LEFT, Key::J);
+	inputManager.bind(InputAction::UI_RIGHT, Key::L);
+
+	inputManager.bind(InputAction::UI_SELECT, Key::ENTER);
+	inputManager.bind(InputAction::UI_CANCEL, Key::ESCAPE);
+
 	const float DAY_LENGTH = 120.0f;
 	float timeOfDay = .3f;
 

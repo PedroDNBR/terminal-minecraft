@@ -26,5 +26,11 @@ enum class InputAction
 	HOTBAR_8,
 	HOTBAR_9,
 	OPEN_INVENTORY,
+	UI_UP,
+	UI_DOWN,
+	UI_LEFT,
+	UI_RIGHT,
+	UI_SELECT,
+	UI_CANCEL,
 	MAX
 };

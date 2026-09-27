@@ -33,11 +33,15 @@ private:
 
 	static constexpr float MAX_STEP = 0.2f;
 
-	static constexpr int MAX_INVENTORY_ROWS = 3;
-	static constexpr int MAX_HOTBAR_SLOTS = 9;
-	static constexpr int TOTAL_SLOTS = MAX_HOTBAR_SLOTS * (MAX_INVENTORY_ROWS + 1);
+	static constexpr uint8_t MAX_INVENTORY_ROWS = 3;
+	static constexpr uint8_t MAX_HOTBAR_SLOTS = 9;
+	static constexpr uint8_t TOTAL_SLOTS = MAX_HOTBAR_SLOTS * (MAX_INVENTORY_ROWS + 1);
 
-	static constexpr int MAX_ITEM_STACK = 64;
+	static constexpr uint8_t INVENTORY_COLUMNS = MAX_HOTBAR_SLOTS;
+	static constexpr uint8_t INVENTORY_TOTAL_ROWS = MAX_INVENTORY_ROWS + 1;
+	static_assert(TOTAL_SLOTS == INVENTORY_COLUMNS * INVENTORY_TOTAL_ROWS);
+
+	static constexpr uint8_t MAX_ITEM_STACK = 64;
 
 public:
 	Player(Camera& camera) : position{ 0, 0, 0 }, rotation{ 0, 0, 0 }, camera(camera) {}
@@ -62,13 +66,29 @@ public:
 	const std::array<InventorySlot, TOTAL_SLOTS>& getInventory() const { return inventory; }
 	auto getHotbar() const { return std::span{ inventory }.subspan<0, MAX_HOTBAR_SLOTS>(); }
 	auto getBackpack() const { return std::span{ inventory }.subspan<MAX_HOTBAR_SLOTS>(); }
+
+	uint8_t getMaxHotbarSlots() const { return MAX_HOTBAR_SLOTS; }
+	uint8_t getMaxInventorySlots() const { return MAX_HOTBAR_SLOTS; }
 	
 	uint8_t getCurrentHotbarSlotSelected() const { return currentHotbarSlotSelected; }
+
+	uint8_t getCurrentInventorySlotSelected() const { return currentInventorySlotSelected; }
+
+	uint8_t getMaxInventoryRows() const { return MAX_INVENTORY_ROWS; }
+
 	BlockType getCurrentHotbarSlotBlockType() const { return getHotbar()[currentHotbarSlotSelected].type; }
 	BlockType getHotbarSlotBlockTypeByIndex(uint8_t index) const { return getHotbar()[index].type; }
-	const int getMaxInventoryRows() const { return MAX_INVENTORY_ROWS; }
 
-	const bool isInventoryOpen() const { return showInventory; }
+
+	bool isInventoryOpen() const { return showInventory; }
+
+	uint8_t hoveredSlotFromGrid() const
+	{
+		return currentInventoryColumnSlotHovered
+			+ currentInventoryRowSlotHovered * MAX_HOTBAR_SLOTS;
+	}
+
+	static constexpr uint8_t NO_SLOT_SELECTED = 255;
 
 private:
 	bool isCrouched = false;
@@ -93,6 +113,10 @@ private:
 	std::array<InventorySlot, TOTAL_SLOTS> inventory;
 
 	uint8_t currentHotbarSlotSelected = 0;
+	uint8_t currentInventoryRowSlotHovered = 0;
+	uint8_t currentInventoryColumnSlotHovered = 0;
+
+	uint8_t currentInventorySlotSelected = 255;
 
 	float currentHeight() const { return isCrouched ? PLAYER_CROUCHED_HEIGHT : PLAYER_HEIGHT; }
 	float currentEyesHeight() const { return isCrouched ? EYE_CROUCHED_HEIGHT : EYE_HEIGHT; }
@@ -102,6 +126,8 @@ private:
 
 	void handleCameraRotation(float deltaTime, InputManager& inputManager);
 	void handleBlockManagement(float deltaTime, InputManager& inputManager, World& world);
+
+	void handleInventoryManagement(InputManager& inputManager);
 
 	void placeSelectedBlockOnSight(World& world);
 

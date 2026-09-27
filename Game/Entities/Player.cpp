@@ -21,6 +21,10 @@ void Player::tick(float deltaTime, InputManager& inputManager, World& world)
 		showInventory = !showInventory;
 
 
+	if (showInventory)
+		handleInventoryManagement(inputManager);
+
+
 	if (!showInventory)
 		handleCameraRotation(deltaTime, inputManager);
 
@@ -31,12 +35,22 @@ void Player::tick(float deltaTime, InputManager& inputManager, World& world)
 				handleCreativeMovement(deltaTime, inputManager);
 			break;
 		case GameMode::Survival:
-			isCrouched = inputManager.isActionDown(InputAction::CROUCH);
-			isSprinting = inputManager.isActionDown(InputAction::SPRINT);
-
 			if (!showInventory)
-				if(inputManager.isActionDown(InputAction::JUMP))
+			{
+				isCrouched = inputManager.isActionDown(InputAction::CROUCH);
+				isSprinting = inputManager.isActionDown(InputAction::SPRINT);
+
+				if (inputManager.isActionDown(InputAction::JUMP))
 					requestJump = true;
+			}
+			else
+			{
+				isCrouched = false;
+				isSprinting = false;
+				requestJump = false;
+			}
+
+				
 			break;
 	}
 
@@ -201,6 +215,35 @@ void Player::handleBlockManagement(float deltaTime, InputManager& inputManager, 
 	{
 		destroyBlockOnSight(world);
 	}
+}
+
+void Player::handleInventoryManagement(InputManager& inputManager)
+{
+	if (inputManager.isActionPressed(InputAction::UI_LEFT))
+		currentInventoryColumnSlotHovered = (currentInventoryColumnSlotHovered + INVENTORY_COLUMNS - 1) % INVENTORY_COLUMNS;
+
+	if (inputManager.isActionPressed(InputAction::UI_RIGHT))
+		currentInventoryColumnSlotHovered = (currentInventoryColumnSlotHovered + 1) % INVENTORY_COLUMNS;
+
+	if (inputManager.isActionPressed(InputAction::UI_UP))
+		currentInventoryRowSlotHovered = (currentInventoryRowSlotHovered + INVENTORY_TOTAL_ROWS - 1) % INVENTORY_TOTAL_ROWS;
+
+	if (inputManager.isActionPressed(InputAction::UI_DOWN))
+		currentInventoryRowSlotHovered = (currentInventoryRowSlotHovered + 1) % INVENTORY_TOTAL_ROWS;
+
+	if (inputManager.isActionPressed(InputAction::UI_SELECT))
+	{
+		if(currentInventorySlotSelected == NO_SLOT_SELECTED)
+			currentInventorySlotSelected = hoveredSlotFromGrid();
+		else
+		{
+			std::swap(inventory[currentInventorySlotSelected], inventory[hoveredSlotFromGrid()]);
+			currentInventorySlotSelected = NO_SLOT_SELECTED;
+		}
+	}
+
+	if (inputManager.isActionPressed(InputAction::UI_CANCEL))
+		currentInventorySlotSelected = NO_SLOT_SELECTED;
 }
 
 void Player::placeSelectedBlockOnSight(World& world)

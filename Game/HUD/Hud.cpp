@@ -21,7 +21,7 @@ void Hud::drawCrosshair(Renderer& renderer)
 void Hud::drawHotbar(const Player& player, Renderer& renderer)
 {
 	const auto& hotbar = player.getHotbar();
-    HotbarLayout layout = computeHotbarLayout(renderer, hotbar.size());
+    HotbarLayout layout = computeHotbarLayout(renderer, player.getMaxHotbarSlots());
     int selected = player.getCurrentHotbarSlotSelected();
 
     for (int slot = 0; slot < layout.slotCount; slot++)
@@ -29,9 +29,9 @@ void Hud::drawHotbar(const Player& player, Renderer& renderer)
 
     for (int slot = 0; slot < layout.slotCount; slot++)
         if(slot != selected)
-            drawSlotBorder(renderer, layout.slotRect(slot), false);
+            drawSlotBorder(renderer, layout.slotRect(slot), borderColor);
 
-    drawSlotBorder(renderer, layout.slotRect(selected), true);
+    drawSlotBorder(renderer, layout.slotRect(selected), selectHotbarColor);
 
     for (int slot = 0; slot < layout.slotCount; slot++)
     {
@@ -44,39 +44,48 @@ void Hud::drawInventory(const Player& player, Renderer& renderer)
     const auto& backpack = player.getBackpack();
     const auto& hotbar = player.getHotbar();
 
-    const int maxInventoryRows = player.getMaxInventoryRows();
-    InventoryLayout layout = computeInventoryLayout(renderer, hotbar.size(), maxInventoryRows);
-    int selected = player.getCurrentHotbarSlotSelected();
+    const uint8_t maxInventoryRows = player.getMaxInventoryRows();
+    InventoryLayout layout = computeInventoryLayout(renderer, player.getMaxHotbarSlots(), maxInventoryRows);
+    uint8_t hovered = player.hoveredSlotFromGrid();
+
+    const bool hoveredIsHotbar = hovered < player.getMaxHotbarSlots();
+    const bool selectedIsHotbar = player.getCurrentInventorySlotSelected() < player.getMaxHotbarSlots();
 
     for (int slot = 0; slot < layout.slotCount; slot++)
         drawSlotFill(renderer, layout.slotRect(slot), backpack[slot]);
 
     for (int slot = 0; slot < layout.slotCount; slot++)
-        //if (slot != selected)
-            drawSlotBorder(renderer, layout.slotRect(slot), false);
+        if (hovered != player.getMaxHotbarSlots() + slot)
+            drawSlotBorder(renderer, layout.slotRect(slot), borderColor);
 
-    //drawSlotBorder(renderer, layout.slotRect(selected), true);
+    if(!hoveredIsHotbar)
+        drawSlotBorder(renderer, layout.slotRect(hovered - player.getMaxHotbarSlots()), hoverColor);
 
-    for (int slot = 0; slot < layout.slotCount; slot++)
-    {
-        drawSlotText(renderer, layout.slotRect(slot), backpack[slot], false);
-    }
-
-    HotbarLayout hotbarLayout = computeHotbarLayout(renderer, hotbar.size());
+    HotbarLayout hotbarLayout = computeHotbarLayout(renderer, player.getMaxHotbarSlots());
 
     for (int slot = 0; slot < hotbarLayout.slotCount; slot++)
         drawSlotFill(renderer, hotbarLayout.slotRect(slot), hotbar[slot]);
 
     for (int slot = 0; slot < hotbarLayout.slotCount; slot++)
-        //if (slot != selected)
-            drawSlotBorder(renderer, hotbarLayout.slotRect(slot), false);
+        if (slot != hovered)
+            drawSlotBorder(renderer, hotbarLayout.slotRect(slot), borderColor);
 
-    //drawSlotBorder(renderer, hotbarLayout.slotRect(selected), true);
+    if(hoveredIsHotbar)
+        drawSlotBorder(renderer, hotbarLayout.slotRect(hovered), hoverColor);
+
+    if (player.getCurrentInventorySlotSelected() < player.NO_SLOT_SELECTED)
+    {
+        if (selectedIsHotbar)
+            drawSlotBorder(renderer, hotbarLayout.slotRect(player.getCurrentInventorySlotSelected()), selectColor);
+        else
+            drawSlotBorder(renderer, layout.slotRect(player.getCurrentInventorySlotSelected() - player.getMaxHotbarSlots()), selectColor);
+    }
+
+    for (int slot = 0; slot < layout.slotCount; slot++)
+        drawSlotText(renderer, layout.slotRect(slot), backpack[slot], hovered == player.getMaxHotbarSlots() + slot);
 
     for (int slot = 0; slot < hotbarLayout.slotCount; slot++)
-    {
-        drawSlotText(renderer, hotbarLayout.slotRect(slot), hotbar[slot], false);
-    }
+        drawSlotText(renderer, hotbarLayout.slotRect(slot), hotbar[slot], slot == hovered);
 }
 
 HotbarLayout Hud::computeHotbarLayout(const Renderer& renderer, int totalSlots) const
@@ -137,21 +146,15 @@ void Hud::drawSlotFill(Renderer& renderer, const Rect& rect, const InventorySlot
     renderer.drawFilledRect(rect.x0 + 1, rect.y0 + 1, rect.x1 - 1, rect.y1 - 1, color);
 }
 
-void Hud::drawSlotBorder(Renderer& renderer, const Rect& rect, bool selected)
+void Hud::drawSlotBorder(Renderer& renderer, const Rect& rect, uint8_t color)
 {
-    uint8_t color = 
-        selected
-        ? colorIndex(C_WHITE, SHADE_LEVELS - 2)
-        : colorIndex(C_STONE, SHADE_LEVELS - 2);
-
     renderer.drawRectBorder(rect.x0, rect.y0, rect.x1, rect.y1, color);
 }
 
-void Hud::drawSlotText(Renderer& renderer, const Rect& rect, const InventorySlot& slot, bool selected)
+void Hud::drawSlotText(Renderer& renderer, const Rect& rect, const InventorySlot& slot, bool hovered)
 {
     if (slot.isEmpty()) return;
-    int screenRealHeight = renderer.getRealHeight() - 1;
-    if (selected)
+    if (hovered)
     {
         renderer.queueText(
             rect.x1 - Blocks::BlockTypeNames[slot.type].length() - std::to_string(slot.count).length() - 2, renderer.logicalToCellY(rect.y1 - 1),

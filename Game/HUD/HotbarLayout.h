@@ -7,7 +7,7 @@ struct HotbarLayout {
 	int slotWidth;
 	int slotCount;
 
-	Rect slotRect(int slot)
+	Rect slotRect(int slot) const
 	{
 		int x0 = startX + (slot * slotWidth);
 		return {
