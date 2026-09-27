@@ -20,6 +20,9 @@ public:
 	void drawPolygonWireframe(Vertex* verts, int count, uint8_t color);
 	void queueText(int x, int y, const std::string& text, uint8_t color);
 
+	void drawFilledRect(int x0, int logicalY0, int x1, int logicalY1, uint8_t color);
+	void drawRectBorder(int x0, int logicalY0, int x1, int logicalY1, uint8_t color);
+
 	Color getPixelColor(int x, int y);
 
 	uint8_t backgroundColor = Color::C_BLACK;
@@ -29,6 +32,7 @@ public:
 	int getLogicalHeight() const { return logicalHeight; }
 	int getRealWidth()     const { return realWidth; }
 	int getRealHeight()    const { return realHeight; }
+	int logicalToCellY(int logicalY)	const { return logicalY / 2; }
 
 	const std::vector<uint8_t>& getColorBuffer() const { return colorBuffer; }
 	const std::vector<RawTextPrint>& getTextToPrint() const { return textToPrint; }

@@ -190,6 +190,28 @@ void Renderer::queueText(int x, int y, const std::string& text, uint8_t color)
 	textToPrint.push_back({ x, y, text, color });
 }
 
+void Renderer::drawFilledRect(int x0, int logicalY0, int x1, int logicalY1, uint8_t color)
+{
+	for (int y = logicalY0; y <= logicalY1; y++)
+		for (int x = x0; x <= x1; x++)
+			drawPixel(x, y, color);
+}
+
+void Renderer::drawRectBorder(int x0, int logicalY0, int x1, int logicalY1, uint8_t color)
+{
+	for (int x = x0; x <= x1; x++)
+	{
+		drawPixel(x, logicalY0, color);
+		drawPixel(x, logicalY1, color);
+	}
+
+	for (int y = logicalY0; y <= logicalY1; y++)
+	{
+		drawPixel(x0, y, color);
+		drawPixel(x1, y, color);
+	}
+}
+
 void Renderer::getWindowSize(int& width, int& height)
 {
 	Platform::getTerminalSize(width, height);

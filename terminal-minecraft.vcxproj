@@ -152,7 +152,9 @@
     <ClInclude Include="Core\MPSCQueue.h" />
     <ClInclude Include="Core\Profiler.h" />
     <ClInclude Include="Game\GameMode.h" />
+    <ClInclude Include="Game\HUD\HotbarLayout.h" />
     <ClInclude Include="Game\HUD\Hud.h" />
+    <ClInclude Include="Game\HUD\Rect.h" />
     <ClInclude Include="Game\InputActions.h" />
     <ClInclude Include="Game\InputManager.h" />
     <ClInclude Include="Game\Inventory\InventorySlot.h" />

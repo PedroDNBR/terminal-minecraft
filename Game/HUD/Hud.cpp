@@ -20,104 +20,85 @@ void Hud::drawCrosshair(Renderer& renderer)
 
 void Hud::drawHotbar(const Player& player, Renderer& renderer)
 {
-	uint8_t menuSelectedColor = colorIndex(C_WHITE, SHADE_LEVELS - 2);
-	uint8_t menuColor = colorIndex(C_STONE, SHADE_LEVELS - 2);
-	uint8_t menuBackColor = colorIndex(C_COBBLESTONE, SHADE_LEVELS - 2);
+	const auto& hotbar = player.getHotbar();
+    HotbarLayout layout = computeHotbarLayout(renderer, hotbar.size());
+    int selected = player.getCurrentHotbarSlotSelected();
 
-	int screenWidth = renderer.getLogicalWidth() - 1;
-	int screenHeight = renderer.getLogicalHeight() - 1;
+    for (int slot = 0; slot < layout.slotCount; slot++)
+        drawSlotFill(renderer, layout.slotRect(slot), hotbar[slot]);
 
+    for (int slot = 0; slot < layout.slotCount; slot++)
+        if(slot != selected)
+            drawSlotBorder(renderer, layout.slotRect(slot), false);
+
+    drawSlotBorder(renderer, layout.slotRect(selected), true);
+
+    for (int slot = 0; slot < layout.slotCount; slot++)
+    {
+        drawSlotText(renderer, layout.slotRect(slot), hotbar[slot], slot == selected);
+    }
+}
+
+HotbarLayout Hud::computeHotbarLayout(const Renderer& renderer, int totalSlots) const
+{
+    const int screenWidth = renderer.getLogicalWidth() - 1;
+    const int screenHeight = renderer.getLogicalHeight() - 1;
+
+    const int screenRealHeight = renderer.getRealHeight() - 1;
+
+    int center = screenWidth / 2;
+
+    int topHotbarBorder = (int)std::floorf((screenHeight * .9f));
+    int hotbarHeight = screenHeight - topHotbarBorder;
+
+    int slotWidth = hotbarHeight;
+
+    return {
+        topHotbarBorder,
+        screenHeight,
+        center - (totalSlots * slotWidth / 2),
+        slotWidth,
+		totalSlots
+    };
+}
+
+void Hud::drawSlotFill(Renderer& renderer, const Rect& rect, const InventorySlot& slot)
+{
+    uint8_t color = !slot.isEmpty()
+        ? colorIndex((Color)Blocks::PROPERTIES[slot.type].faceColors[4], SHADE_LEVELS - 1)
+        : colorIndex(C_COBBLESTONE, SHADE_LEVELS - 2);
+
+    renderer.drawFilledRect(rect.x0 + 1, rect.y0 + 1, rect.x1 - 1, rect.y1 - 1, color);
+}
+
+void Hud::drawSlotBorder(Renderer& renderer, const Rect& rect, bool selected)
+{
+    uint8_t color = 
+        selected
+        ? colorIndex(C_WHITE, SHADE_LEVELS - 2)
+        : colorIndex(C_STONE, SHADE_LEVELS - 2);
+
+    renderer.drawRectBorder(rect.x0, rect.y0, rect.x1, rect.y1, color);
+}
+
+void Hud::drawSlotText(Renderer& renderer, const Rect& rect, const InventorySlot& slot, bool selected)
+{
+    if (slot.isEmpty()) return;
     int screenRealHeight = renderer.getRealHeight() - 1;
-
-	int center = screenWidth / 2;
-	
-	int topHotbarBorder = (int)std::floorf((screenHeight * .9f));
-	int hotbarHeight = screenHeight - topHotbarBorder;
-
-	int slotWidth = hotbarHeight;
-	int totalSlots = player.getHotbar().size();
-
-	int totalHotbarWidth = totalSlots * slotWidth;
-
-	int startX = center - (totalHotbarWidth / 2);
-
-	int selectedSlot = player.getCurrentHotbarSlotSelected();
-
-    for (int slot = 0; slot < totalSlots; slot++)
+    if (selected)
     {
-        int x0 = startX + (slot * slotWidth);
-        int x1 = x0 + slotWidth;
-
-        BlockType currentBlock = player.getHotbar()[slot].type;
-        uint8_t currentBlockCount = player.getHotbar()[slot].count;
-
-        for (int y = topHotbarBorder + 1; y < screenHeight; y++)
-        {
-            for (int x = x0 + 1; x < x1; x++)
-            {
-                if (currentBlockCount > 0)
-                    renderer.drawPixel(x, y, colorIndex(
-                        static_cast<Color>(Blocks::PROPERTIES[currentBlock].faceColors[4]), SHADE_LEVELS - 1)
-                    );
-                else
-                    renderer.drawPixel(x, y, menuBackColor);
-            }
-        }
-        if (currentBlockCount > 0)
-        {
-            int blockCount = player.getHotbar()[slot].count;
-            if(slot == selectedSlot)
-            {
-                renderer.queueText(
-                    x1 - Blocks::BlockTypeNames[currentBlock].length() - std::to_string(blockCount).length() - 2, screenRealHeight,
-                    std::string(Blocks::BlockTypeNames[currentBlock]) + " x" + std::to_string(blockCount),
-                    C_WHITE
-                );
-            }
-            else
-            {
-                renderer.queueText(
-                    x1 - std::to_string(blockCount).length(), screenRealHeight,
-                    std::to_string(blockCount),
-                    C_WHITE
-                );
-			}
-        }
+        renderer.queueText(
+            rect.x1 - Blocks::BlockTypeNames[slot.type].length() - std::to_string(slot.count).length() - 2, renderer.logicalToCellY(rect.y1),
+            std::string(Blocks::BlockTypeNames[slot.type]) + " x" + std::to_string(slot.count),
+            C_WHITE
+        );
     }
-
-    for (int slot = 0; slot < totalSlots; slot++)
+    else
     {
-        int x0 = startX + (slot * slotWidth);
-        int x1 = x0 + slotWidth;
-
-        uint8_t borderColor =
-            (slot == selectedSlot)
-            ? menuSelectedColor
-            : menuColor;
-
-        for (int x = x0; x <= x1; x++)
-        {
-            renderer.drawPixel(x, topHotbarBorder, borderColor);
-            renderer.drawPixel(x, screenHeight, borderColor);
-        }
-    }
-
-    for (int slot = 0; slot <= totalSlots; slot++)
-    {
-        int x = startX + (slot * slotWidth);
-
-        bool selectedBorder =
-            (slot == selectedSlot) ||
-            (slot == selectedSlot + 1);
-
-        uint8_t borderColor =
-            selectedBorder
-            ? menuSelectedColor
-            : menuColor;
-
-        for (int y = topHotbarBorder; y <= screenHeight; y++)
-        {
-            renderer.drawPixel(x, y, borderColor);
-        }
+        renderer.queueText(
+            rect.x1 - std::to_string(slot.count).length(), renderer.logicalToCellY(rect.y1),
+            std::to_string(slot.count),
+            C_WHITE
+        );
     }
 }
