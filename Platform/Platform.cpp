@@ -75,7 +75,8 @@ namespace
 		'6',
 		'7',
 		'8',
-		'9'
+		'9',
+		'E'
 	};
 	static_assert(sizeof(keyMap) / sizeof(keyMap[0]) == static_cast<int>(Key::MAX),
 		"Make sure the keyMap array has the same number of elements as the Key enum");

@@ -60,6 +60,8 @@ int main()
 	inputManager.bind(InputAction::HOTBAR_8, Key::NUM_LINE_8);
 	inputManager.bind(InputAction::HOTBAR_9, Key::NUM_LINE_9);
 
+	inputManager.bind(InputAction::OPEN_INVENTORY, Key::E);
+
 	const float DAY_LENGTH = 120.0f;
 	float timeOfDay = .3f;
 
@@ -84,13 +86,16 @@ int main()
 
 	Player player(camera);
 
-	player.addItemToHotbar(B_LOG, 63, 0);
-	player.addItemToHotbar(B_STONE, 32, 1);
-	player.addItemToHotbar(B_SAND, 32, 2);
-	player.addItemToHotbar(B_LEAVES, 32, 3);
-	player.addItemToHotbar(B_DIRT, 32, 4);
-	player.addItemToHotbar(B_GRASS, 32, 5);
-	player.addItemToHotbar(B_CACTUS, 16, 6);
+	player.addItemToInventory(B_LOG, 63, 0);
+	player.addItemToInventory(B_STONE, 63, 1);
+	player.addItemToInventory(B_SAND, 63, 2);
+	player.addItemToInventory(B_LEAVES, 63, 3);
+	player.addItemToInventory(B_DIRT, 63, 4);
+	player.addItemToInventory(B_GRASS, 63, 5);
+	player.addItemToInventory(B_CACTUS, 16, 6);
+
+	player.addItemToInventory(B_CACTUS, 16, 9);
+
 
 	//Vector3 startingPlayerPosition = { 0,200,-2 };
 	Vector3 startingPlayerPosition = { 0,40,-10 };
@@ -209,8 +214,13 @@ int main()
 			voxelRenderer.render(renderer, camera, lighting);
 		}
 
-		hud.drawCrosshair(renderer);
-		hud.drawHotbar(player, renderer);
+		if(player.isInventoryOpen())
+			hud.drawInventory(player, renderer);
+		else
+		{
+			hud.drawCrosshair(renderer);
+			hud.drawHotbar(player, renderer);
+		}
 
 		{
 			ScopedTimer t(presentMs);

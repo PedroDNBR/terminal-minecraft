@@ -17,37 +17,46 @@ void Player::setRotation(const Vector3& newRotation)
 
 void Player::tick(float deltaTime, InputManager& inputManager, World& world)
 {
-	handleCameraRotation(deltaTime, inputManager);
+	if (inputManager.isActionPressed(InputAction::OPEN_INVENTORY))
+		showInventory = !showInventory;
+
+
+	if (!showInventory)
+		handleCameraRotation(deltaTime, inputManager);
 
 	switch (gameMode)
 	{
 		case GameMode::Creative:
-			handleCreativeMovement(deltaTime, inputManager);
+			if (!showInventory)
+				handleCreativeMovement(deltaTime, inputManager);
 			break;
 		case GameMode::Survival:
 			isCrouched = inputManager.isActionDown(InputAction::CROUCH);
 			isSprinting = inputManager.isActionDown(InputAction::SPRINT);
 
-			if(inputManager.isActionDown(InputAction::JUMP))
-				requestJump = true;
+			if (!showInventory)
+				if(inputManager.isActionDown(InputAction::JUMP))
+					requestJump = true;
 			break;
 	}
 
-	handleBlockManagement(deltaTime, inputManager, world);
+	if (!showInventory)
+		handleBlockManagement(deltaTime, inputManager, world);
 
-	if (inputManager.isActionPressed(InputAction::CHANGE_GAMEMODE))
-	{
-		switch (gameMode)
+	if (!showInventory)
+		if (inputManager.isActionPressed(InputAction::CHANGE_GAMEMODE))
 		{
-		case GameMode::Survival:
-			gameMode = GameMode::Creative;
-			velocity = Vector3{ 0, 0, 0 };
-			break;
-		case GameMode::Creative:
-			gameMode = GameMode::Survival;
-			break;
+			switch (gameMode)
+			{
+			case GameMode::Survival:
+				gameMode = GameMode::Creative;
+				velocity = Vector3{ 0, 0, 0 };
+				break;
+			case GameMode::Creative:
+				gameMode = GameMode::Survival;
+				break;
+			}
 		}
-	}
 
 	if (inputManager.isActionPressed(InputAction::HOTBAR_1))
 		currentHotbarSlotSelected = 0;
@@ -67,6 +76,7 @@ void Player::tick(float deltaTime, InputManager& inputManager, World& world)
 		currentHotbarSlotSelected = 7;
 	if (inputManager.isActionPressed(InputAction::HOTBAR_9))
 		currentHotbarSlotSelected = 8;
+
 }
 
 void Player::fixedTick(float fixedDeltaTime, InputManager& inputManager, World& world)
@@ -79,20 +89,48 @@ void Player::fixedTick(float fixedDeltaTime, InputManager& inputManager, World& 
 	}
 }
 
-void Player::addItemToHotbar(BlockType blockType, uint8_t count, uint8_t slot)
+void Player::addItemToInventory(BlockType blockType, uint8_t count)
 {
-	if (slot >= hotbar.size())
-		return;
-	hotbar[slot].type = blockType;
-	hotbar[slot].count = count;
+	for (int slot = 0; slot < TOTAL_SLOTS; slot++)
+	{
+		if (
+			!inventory[slot].isEmpty() &&
+			inventory[slot].type == blockType &&
+			inventory[slot].count < MAX_ITEM_STACK
+			)
+		{
+			inventory[slot].count++;
+			return;
+		}
+	}
+
+	for (int slot = 0; slot < TOTAL_SLOTS; slot++)
+	{
+		if (inventory[slot].isEmpty())
+		{
+			inventory[slot].type = blockType;
+			inventory[slot].count = 1;
+			return;
+		}
+	}
 }
 
-void Player::removeItemFromHotbar(uint8_t slot)
+void Player::addItemToInventory(BlockType blockType, uint8_t count, uint8_t slot)
 {
-	if (slot >= hotbar.size())
+	if (slot >= inventory.size())
 		return;
-	hotbar[slot].type = B_AIR;
-	hotbar[slot].count = 0;
+
+	inventory[slot].type = blockType;
+	inventory[slot].count = count;
+}
+
+
+void Player::removeItemFromInventory(uint8_t slot)
+{
+	if (slot >= inventory.size())
+		return;
+	inventory[slot].type = B_AIR;
+	inventory[slot].count = 0;
 }
 
 void Player::selectHotbarSlot(uint8_t slot)
@@ -104,10 +142,13 @@ void Player::handleSurvivalMovement(float deltaTime, InputManager& inputManager,
 {
 
 	Vector3 targetMovementDirection = {};
-	if (inputManager.isActionDown(InputAction::MOVE_FORWARD)) targetMovementDirection += getCamera().getForward();
-	if (inputManager.isActionDown(InputAction::MOVE_BACKWARD)) targetMovementDirection -= getCamera().getForward();
-	if (inputManager.isActionDown(InputAction::MOVE_RIGHT)) targetMovementDirection += getCamera().getRight();
-	if (inputManager.isActionDown(InputAction::MOVE_LEFT)) targetMovementDirection -= getCamera().getRight();
+	if (!showInventory)
+	{
+		if (inputManager.isActionDown(InputAction::MOVE_FORWARD)) targetMovementDirection += getCamera().getForward();
+		if (inputManager.isActionDown(InputAction::MOVE_BACKWARD)) targetMovementDirection -= getCamera().getForward();
+		if (inputManager.isActionDown(InputAction::MOVE_RIGHT)) targetMovementDirection += getCamera().getRight();
+		if (inputManager.isActionDown(InputAction::MOVE_LEFT)) targetMovementDirection -= getCamera().getRight();
+	}
 	targetMovementDirection = Vector3::normalize(targetMovementDirection);
 
 	float speed = isSprinting ? WALK_SPEED * SPRINT_MULTIPLIER : WALK_SPEED;
@@ -121,7 +162,7 @@ void Player::handleSurvivalMovement(float deltaTime, InputManager& inputManager,
 	requestJump = false;
 
 	velocity.y -= world.GRAVITY * deltaTime;
-	if(velocity.y < -TERMINAL_VELOCITY)
+	if (velocity.y < -TERMINAL_VELOCITY)
 		velocity.y = -TERMINAL_VELOCITY;
 	else if (velocity.y > TERMINAL_VELOCITY)
 		velocity.y = TERMINAL_VELOCITY;
@@ -168,14 +209,14 @@ void Player::placeSelectedBlockOnSight(World& world)
 
 	if (!hit.hit) return;
 	if (occupiesCell(hit.placement)) return;
-	if (hotbar[currentHotbarSlotSelected].count == 0) return;
+	if (getHotbar()[currentHotbarSlotSelected].count == 0) return;
 
-	world.setBlockAtWorldPosition(hit.placement, hotbar[currentHotbarSlotSelected].type);
+	world.setBlockAtWorldPosition(hit.placement, getHotbar()[currentHotbarSlotSelected].type);
 	if (gameMode == GameMode::Survival)
 	{
-		hotbar[currentHotbarSlotSelected].count--;
-		if (hotbar[currentHotbarSlotSelected].count == 0)
-			removeItemFromHotbar(currentHotbarSlotSelected);
+		inventory[currentHotbarSlotSelected].count--;
+		if (getHotbar()[currentHotbarSlotSelected].count == 0)
+			removeItemFromInventory(currentHotbarSlotSelected);
 	}
 }
 
@@ -186,27 +227,7 @@ void Player::destroyBlockOnSight(World& world)
 	{
 		world.setBlockAtWorldPosition(hit.block, static_cast<BlockType>(B_AIR));
 		if (gameMode == GameMode::Survival)
-		{
-			uint8_t firstEmptySlot = 255;
-			for (int slot = 0; slot < hotbar.size(); slot++)
-			{
-				if (hotbar[slot].count == 0 && firstEmptySlot == 255)
-					firstEmptySlot = slot;
-				if (hotbar[slot].type == hit.blockType)
-				{
-					if (hotbar[slot].count < MAX_ITEM_STACK)
-					{
-						hotbar[slot].count++;
-						break;
-					}
-				}
-				if (firstEmptySlot != 255)
-				{
-					addItemToHotbar(hit.blockType, 1, firstEmptySlot);
-					break;
-				}
-			}
-		}
+			addItemToInventory(hit.blockType, 1);
 	}
 }
 

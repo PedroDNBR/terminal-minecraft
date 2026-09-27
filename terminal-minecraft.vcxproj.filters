@@ -228,5 +228,8 @@
     <ClInclude Include="Game\HUD\HotbarLayout.h">
       <Filter>Game\HUD</Filter>
     </ClInclude>
+    <ClInclude Include="Game\HUD\InventoryLayout.h">
+      <Filter>Game\HUD</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

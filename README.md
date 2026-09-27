@@ -202,7 +202,12 @@ Screenshots from the build history, in rough chronological order:
         <strong>Block Placement/Removal and Hotbar</strong><br>
         <img width="100%" src="https://i.imgur.com/YxMB7Pa.png" />
       </td>
+      <td align="center">
+        <strong>Inventory visualization and storing</strong><br>
+        <img width="100%" src="https://i.imgur.com/J1MxWUy.png" />
+      </td>
     </tr>
 </table>
+
 <br/>
 

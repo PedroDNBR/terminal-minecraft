@@ -1,4 +1,5 @@
 #pragma once
+#include <span>
 #include "../InputManager.h"
 #include "../../Core/Vector.h"
 #include "../../World/Camera.h"
@@ -32,7 +33,9 @@ private:
 
 	static constexpr float MAX_STEP = 0.2f;
 
+	static constexpr int MAX_INVENTORY_ROWS = 3;
 	static constexpr int MAX_HOTBAR_SLOTS = 9;
+	static constexpr int TOTAL_SLOTS = MAX_HOTBAR_SLOTS * (MAX_INVENTORY_ROWS + 1);
 
 	static constexpr int MAX_ITEM_STACK = 64;
 
@@ -50,15 +53,22 @@ public:
 	void tick(float deltaTime, InputManager& inputManager, World& world);
 	void fixedTick(float fixedDeltaTime, InputManager& inputManager, World& world);
 
-	void addItemToHotbar(BlockType blockType, uint8_t count, uint8_t slot);
-	void removeItemFromHotbar(uint8_t slot);
+	void addItemToInventory(BlockType blockType, uint8_t count);
+	void addItemToInventory(BlockType blockType, uint8_t count, uint8_t slot);
+	void removeItemFromInventory(uint8_t slot);
 
 	void selectHotbarSlot(uint8_t slot);
 
-	std::array<InventorySlot, MAX_HOTBAR_SLOTS> getHotbar() const& { return hotbar; }
-	uint8_t getCurrentHotbarSlotSelected() const& { return currentHotbarSlotSelected; }
-	BlockType getCurrentHotbarSlotBlockType() const& { return hotbar[currentHotbarSlotSelected].type; }
-	BlockType getHotbarSlotBlockTypeByIndex(uint8_t index) const& { return hotbar[index].type; }
+	const std::array<InventorySlot, TOTAL_SLOTS>& getInventory() const { return inventory; }
+	auto getHotbar() const { return std::span{ inventory }.subspan<0, MAX_HOTBAR_SLOTS>(); }
+	auto getBackpack() const { return std::span{ inventory }.subspan<MAX_HOTBAR_SLOTS>(); }
+	
+	uint8_t getCurrentHotbarSlotSelected() const { return currentHotbarSlotSelected; }
+	BlockType getCurrentHotbarSlotBlockType() const { return getHotbar()[currentHotbarSlotSelected].type; }
+	BlockType getHotbarSlotBlockTypeByIndex(uint8_t index) const { return getHotbar()[index].type; }
+	const int getMaxInventoryRows() const { return MAX_INVENTORY_ROWS; }
+
+	const bool isInventoryOpen() const { return showInventory; }
 
 private:
 	bool isCrouched = false;
@@ -66,6 +76,8 @@ private:
 	bool isGrounded = false;
 
 	bool requestJump = false;
+
+	bool showInventory = false;
 
 	Vector3 position;
 	Vector3 rotation;
@@ -78,7 +90,7 @@ private:
 
 	GameMode gameMode = GameMode::Survival;
 
-	std::array<InventorySlot, MAX_HOTBAR_SLOTS> hotbar;
+	std::array<InventorySlot, TOTAL_SLOTS> inventory;
 
 	uint8_t currentHotbarSlotSelected = 0;
 

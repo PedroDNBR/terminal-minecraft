@@ -25,5 +25,6 @@ enum class InputAction
 	HOTBAR_7,
 	HOTBAR_8,
 	HOTBAR_9,
+	OPEN_INVENTORY,
 	MAX
 };

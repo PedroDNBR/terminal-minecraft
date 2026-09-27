@@ -154,6 +154,7 @@
     <ClInclude Include="Game\GameMode.h" />
     <ClInclude Include="Game\HUD\HotbarLayout.h" />
     <ClInclude Include="Game\HUD\Hud.h" />
+    <ClInclude Include="Game\HUD\InventoryLayout.h" />
     <ClInclude Include="Game\HUD\Rect.h" />
     <ClInclude Include="Game\InputActions.h" />
     <ClInclude Include="Game\InputManager.h" />

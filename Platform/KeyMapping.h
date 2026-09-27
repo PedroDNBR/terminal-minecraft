@@ -29,6 +29,7 @@ enum class Key
 	NUM_LINE_7,
 	NUM_LINE_8,
 	NUM_LINE_9,
+	E,
 	MAX
 };
 
